@@ -10,6 +10,6 @@ tqdm
 yapf
 dgl-cu111==0.6.1
 stanfordcorenlp
-transformers==4.31.0
+transformers==4.50.0
 open-clip-torch
 pypng
