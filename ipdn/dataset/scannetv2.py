@@ -106,7 +106,7 @@ class ScanNetDataset_sample_graph_edge(Dataset):
         self.nyu40id2class = self._get_nyu40id2class()
         self.sem2nyu = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
 
-        self.tokenizer = RobertaTokenizerFast.from_pretrained('./backbones/roberta-base/', local_files_only=True)
+        self.tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
 
     def load_scene_graphs(self):
         scene_graphs = {}
@@ -114,6 +114,7 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             scene_graphs_path = os.path.join(self.data_root, self.dataset, 'scene_graphs_new_'+self.prefix+'.json')
         else:
             scene_graphs_path = os.path.join(self.data_root, self.dataset, 'scene_graphs_'+self.prefix+'.json')
+        print('Scene graphs path: ', scene_graphs_path)
         if os.path.exists(scene_graphs_path):
             scene_graphs = json.load(open(scene_graphs_path))
         else:
@@ -174,6 +175,8 @@ class ScanNetDataset_sample_graph_edge(Dataset):
 
     def get_sp_filenames(self):
         filenames = glob.glob(osp.join(self.data_root, 'scannetv2', self.prefix, '*' + '_refer.pth'))
+        print(f'Found {len(filenames)} scene graph files in {self.prefix} split.')
+        print("Folder: ", self.data_root)
         assert len(filenames) > 0, 'Empty dataset.'
         filenames = sorted(filenames)
         return filenames

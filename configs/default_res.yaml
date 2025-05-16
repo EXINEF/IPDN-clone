@@ -30,7 +30,7 @@ data:
   train:
     type: scannetv2_sample_graph_edge
     dataset: scanrefer
-    data_root: data/
+    data_root: /nfs/data_todi/jli/Alessio_works/data_multi3dreder/
     prefix: train
     suffix: .pth
     training: True
@@ -47,7 +47,7 @@ data:
   val:
     type: scannetv2_sample_graph_edge
     dataset: scanrefer
-    data_root: data/
+    data_root: /nfs/data_todi/jli/Alessio_works/data_multi3dreder/
     prefix: val
     suffix: .pth
     training: False

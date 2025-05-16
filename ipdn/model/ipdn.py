@@ -66,7 +66,7 @@ class IPDN(nn.Module):
 
         self.decoder_param = dec
         self.fps_num = fps_num
-        self.text_encoder = RobertaModel.from_pretrained('./backbones/roberta-base')
+        self.text_encoder = RobertaModel.from_pretrained('roberta-base')
 
         self.sampling_module = sampling_module
         self.dec = DEC(**dec, sampling_module=sampling_module, in_channel=media)

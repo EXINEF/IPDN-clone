@@ -1,0 +1,6 @@
+README.md
+setup.py
+ipdn.egg-info/PKG-INFO
+ipdn.egg-info/SOURCES.txt
+ipdn.egg-info/dependency_links.txt
+ipdn.egg-info/top_level.txt

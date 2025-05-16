@@ -93,7 +93,11 @@ class SelfAttentionLayer(nn.Module):
         B = x.shape[0]
         q = k = self.with_pos_embed(x, pe)
         if attn_mask is not None:
+            # print(f"q shape: {q.shape}, k shape: {k.shape}, x shape: {x.shape}")
+            # print(f"x_mask shape: {x_mask.shape if x_mask is not None else None}")
+            # print(f"attn_mask before shape: {attn_mask.shape}")
             attn_mask = attn_mask.unsqueeze(1).repeat(1, self.nhead, 1, 1).view(B*self.nhead, q.shape[1], k.shape[1])
+            # print(f"attn_mask after shape: {attn_mask.shape}")
             output, _ = self.attn(q, k, x, key_padding_mask=x_mask, attn_mask=attn_mask)  # (1, 100, d_model)
         else:
             output, _ = self.attn(q, k, x, key_padding_mask=x_mask)
