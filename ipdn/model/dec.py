@@ -134,7 +134,57 @@ class FFN(nn.Module):
         output = output + x
         if norm: output = self.norm(output)
         return output
-    
+
+class ObjectCrossAttention(nn.Module):
+    def __init__(self, d_model, nhead, dropout=0.0):
+        super().__init__()
+        self.attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
+        self.norm = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
+        
+    def forward(self, scene_object_embeds, query, batch_offsets):
+        """
+        Args:
+            scene_object_embeds: List of tensors [(num_objs1, d_model), (num_objs2, d_model)...]
+            query: Tensor [B_utterances, num_queries, d_model]
+            batch_offsets: Tensor indicating scene boundaries
+        """
+        device = query.device
+        B_utterances = query.shape[0]
+        num_scenes = len(scene_object_embeds)
+        
+        # 1. Create a mapping from utterance index to scene index
+        utterance_to_scene = []
+        for scene_idx in range(num_scenes):
+            start_idx = batch_offsets[scene_idx]
+            end_idx = batch_offsets[scene_idx + 1]
+            num_utterances = end_idx - start_idx
+            utterance_to_scene.extend([scene_idx] * num_utterances)
+        
+        # 2. Find max objects across all scenes for padding
+        max_objects = max([obj_emb.shape[0] for obj_emb in scene_object_embeds])
+        
+        # 3. Create padded tensor for all utterances
+        padded_objs = torch.zeros(B_utterances, max_objects, query.shape[-1], device=device)
+        attention_mask = torch.ones(B_utterances, max_objects, device=device, dtype=torch.bool)
+        
+        # 4. Fill in the padded tensor with appropriate scene objects for each utterance
+        for utterance_idx in range(B_utterances):
+            scene_idx = utterance_to_scene[utterance_idx]
+            obj_emb = scene_object_embeds[scene_idx]
+            num_objs = obj_emb.shape[0]
+            
+            padded_objs[utterance_idx, :num_objs] = obj_emb
+            attention_mask[utterance_idx, :num_objs] = False  # False = attend to this position
+        
+        # 5. Perform attention with padding mask
+        output, _, _ = self.attn(query, padded_objs, padded_objs, key_padding_mask=attention_mask)
+        output = self.dropout(output)
+        output = output + query
+        output = self.norm(output)
+        
+        return output, None, None  # Match return signature of other attention layers
+       
 class DEC(nn.Module):
     """
     in_channels List[int] (4,) [64,96,128,160]
@@ -188,6 +238,7 @@ class DEC(nn.Module):
         self.sem_cls_heads = nn.ModuleList([])
         self.scg = nn.ModuleList([])
         self.lqg = nn.ModuleList([])
+        self.obj_att_layers = nn.ModuleList([])
         if self.lang_att:
             self.lla_layers = nn.ModuleList([])
             self.lsa_layers = nn.ModuleList([])
@@ -204,7 +255,8 @@ class DEC(nn.Module):
                 self.lla_layers.append(SelfAttentionLayer(d_model, nhead, dropout))
                 self.lsa_layers.append(CrossAttentionLayer(d_model, nhead, dropout))
                 self.lsa_ffn_layers.append(FFN(d_model, hidden_dim, dropout, activation_fn))    
-        
+            self.obj_att_layers.append(ObjectCrossAttention(d_model, nhead, dropout))
+
         self.sem_cls_head = ThreeLayerMLP(d_model, self.num_class)
 
         self.out_norm = nn.LayerNorm(d_model)
@@ -228,8 +280,13 @@ class DEC(nn.Module):
         
         self.scg_head = SelfAttentionLayer(d_model, nhead, dropout=0, glu=True)
         
-    
-    def forward_iter_pred(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None):
+        self.object_projection = nn.Sequential(
+            nn.Linear(768, 512),
+            nn.ReLU(),
+            nn.Linear(512, d_model)  # d_model is 256
+        )
+        
+    def forward_iter_pred(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None, scene_object_embeds=None):
         """
         x [B*M, inchannel]
         """
@@ -294,6 +351,11 @@ class DEC(nn.Module):
         init_lang_mask = lang_masks
         #lang_query = lang_feats
         
+        if scene_object_embeds is not None:
+            projected_scene_embeds = []
+            for scene_embeds in scene_object_embeds:
+                projected_scene_embeds.append(self.object_projection(scene_embeds))
+
         # multi-round
         l = 0
         for i in range(self.num_layer):
@@ -325,8 +387,12 @@ class DEC(nn.Module):
                 lang_query, _, _ = self.lsa_layers[i](query, lang_query)
                 lang_query = self.lsa_ffn_layers[i](lang_query)
 
-            query = query + query_rla + query_rra 
-            
+            if scene_object_embeds is not None:
+                query_obj, _, _ = self.obj_att_layers[i](projected_scene_embeds, query, batch_offsets)
+                query = query + query_rla + query_obj + query_rra
+            else:
+                query = query + query_rla + query_rra
+                
             if i <= l:
                 query = self.scg[i](query, attn_mask=~scg_mask)
             else:
@@ -421,8 +487,8 @@ class DEC(nn.Module):
                 scg_mask[i,j,ind[i][j]] = True
         return scg_mask
     
-    def forward(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None):
+    def forward(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None, scene_object_embeds=None):
         if self.iter_pred:
-            return self.forward_iter_pred(x, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_pos, feats_2d)
+            return self.forward_iter_pred(x, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_pos, feats_2d, scene_object_embeds)
         else:
             raise NotImplementedError

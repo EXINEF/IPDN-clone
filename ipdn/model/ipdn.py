@@ -15,6 +15,35 @@ from .loss import Criterion, get_iou
 from .dec import DEC
 from transformers import RobertaModel
 from pointnet2.pointnet2_utils import FurthestPointSampling
+import os
+import json
+from transformers import CLIPTokenizer, CLIPTextModel
+import random
+
+LOSS_SCENE_OBJ_WEIGHT = 1
+print(f"LOSS_SCENE_OBJ_WEIGHT: {LOSS_SCENE_OBJ_WEIGHT}")
+# print("USING SO_WEIGHT")
+# GLOBAL_OBJECT_NAMES_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/global_object_names__20250507-101601_winsize20_minocc6.json"
+GLOBAL_OBJECT_NAMES_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/global_object_names__20250507-101601_winsize20_minocc6.json"
+
+
+USE_RANDOM_TEMPLATE = False
+TEMPLATES = [
+    "There is a {} in the scene",
+    "A scene with {}.",
+    "A scene containing {}.",
+    "A room with {}.",
+    "A room containing {}.",
+    "There is {} in the scene.",
+    "There is {} in the room.",
+    "{} is present in the scene.",
+    "{} is present in the room.",
+    "The scene has {}.",
+    "The room has {}.",
+    "The scene contains {}.",
+    "The room contains {}.",
+]
+
 
 class IPDN(nn.Module):
     def __init__(
@@ -90,6 +119,8 @@ class IPDN(nn.Module):
                 for param in module.parameters():
                     param.requires_grad = False
 
+        self.object_prompt_features, _ = self.precompute_object_prompt_features()
+
     def init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.BatchNorm1d):
@@ -122,11 +153,47 @@ class IPDN(nn.Module):
         sp_feats, sp_coords_float, fps_seed_sp, batch_offsets, sp_ins_labels, feats_2d = self.expand_and_fps(sp_feats, sp_coords_float, batch_offsets, sp_ins_labels, scenes_len, feats_2d, mode='tr')
         lang_feats = self.text_encoder(lang_tokenss, attention_mask=lang_masks)[0]
 
-        out = self.dec(sp_feats, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_coords_float, feats_2d)
+        batch_object_names = self.get_batch_object_names(scan_ids)
+        scene_object_embeds = []
+        for i, scene_id in enumerate(scan_ids):
+            scene_object_embeds.append(self.get_scene_object_embeddings(scene_id))
+
+        out = self.dec(sp_feats, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_coords_float, feats_2d, scene_object_embeds)
+        
+        loss_scene_obj = self.compute_global_scene_object_bce_loss(
+            out['proj_queries'], 
+            self.object_prompt_features, 
+            batch_object_names,
+            scenes_len
+        )
         
         loss, loss_dict = self.criterion(out, gt_spmasks, sp_ref_masks, object_idss, sp_ins_labels, dense_maps, lang_masks, fps_seed_sp, sp_coords_float, batch_offsets)
-
+        
+        loss_dict['loss_scene_obj'] = loss_scene_obj
+        loss = loss + LOSS_SCENE_OBJ_WEIGHT * loss_scene_obj
         return loss, loss_dict
+
+    def get_batch_object_names(self, scan_ids):
+        batch_object_names = []
+        for scan_id in scan_ids:
+            if scan_id in self.object_prompt_names:
+                # print(f"Scan ID {scan_id} found in object prompt names.")
+                batch_object_names.append(self.object_prompt_names[scan_id])
+            else:
+                raise ValueError(f"Scan ID {scan_id} not found in object prompt names.")
+        return batch_object_names
+    
+    def get_scene_object_embeddings(self, scene_id):
+        """
+        Get embeddings for objects in the current scene
+        Args:
+            scene_id: ID of the current scene
+        Returns:
+            Tensor of shape [num_scene_objects, 768]
+        """
+        scene_objects = self.object_prompt_names[scene_id]
+        object_indices = [self.object_vocab[obj] for obj in scene_objects]
+        return self.object_prompt_features[object_indices]
     
     @cuda_cast
     def predict(self, ann_ids, scan_ids, voxel_coords, p2v_map, v2p_map, spatial_shape, feats, superpoints, batch_offsets, object_idss, gt_pmasks, gt_spmasks, sp_ref_masks, lang_tokenss, lang_masks, coords_float, sp_ins_labels, dense_maps, scenes_len=None, meta_datas=None, view_dependents=None, feats_2d=None):
@@ -140,7 +207,7 @@ class IPDN(nn.Module):
         sp_feats, sp_coords_float, fps_seed_sp, batch_offsets, sp_ins_labels, feats_2d = self.expand_and_fps(sp_feats, sp_coords_float, batch_offsets, sp_ins_labels, scenes_len, feats_2d, mode='pred')
         lang_feats = self.text_encoder(lang_tokenss, attention_mask=lang_masks)[0]
         
-        out = self.dec(sp_feats, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_coords_float, feats_2d) 
+        out = self.dec(sp_feats, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_coords_float, feats_2d, None) 
         ret = self.predict_by_feat(scan_ids, object_idss, ann_ids, out, superpoints, gt_pmasks, gt_spmasks, fps_seed_sp)
         if meta_datas[0] is not None: 
             ret['meta_datas'] = meta_datas
@@ -248,3 +315,126 @@ class IPDN(nn.Module):
         return sp_feats_expand, sp_coords_float_expand, fps_seed_sp_expand, batch_offsets_expand, sp_ins_labels_expand, feats_2d_expand
     
     
+    def precompute_object_prompt_features(self):
+        """
+        Precompute CLIP text features for object prompts
+        Args:
+            object_classes: List of object class names
+            clip_model: CLIP model for text encoding
+        Returns:
+            Tensor of shape [num_classes, 768]
+        """
+
+        # PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
+        # SCENE_LIST_PATH = "/nfs/data_todi/jli/Alessio_works/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
+
+        PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
+        SCENE_LIST_PATH = "/home/disi/Alessio/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
+ 
+        # load each line in the file in  a list
+        with open(SCENE_LIST_PATH, 'r') as f:
+            scene_list = f.readlines()
+        scene_list = [x.strip() for x in scene_list]
+        scene_list = sorted(scene_list)
+
+        self.object_prompt_names = {}
+
+        for scene_id in scene_list:
+            object_names_path = os.path.join(PREPROCESSED_FILTERED_OBJECT_IDS_PATH, scene_id + "_filtered_objects.json")
+            if os.path.exists(object_names_path):
+                with open(object_names_path, 'r') as f:
+                    object_names = json.load(f)
+            else:
+                raise FileNotFoundError(f"Filtered object IDs file not found for scene {scene_id}")
+            object_names = list(object_names.keys())
+            self.object_prompt_names[scene_id] = object_names
+        
+        print(f"Loaded {len(self.object_prompt_names)} scene object names from the file.")
+
+        print("Using Preprocessed Filtered Object IDs: ", PREPROCESSED_FILTERED_OBJECT_IDS_PATH)
+
+        model_name = 'openai/clip-vit-large-patch14'
+        clip_tokenizer = CLIPTokenizer.from_pretrained(model_name)
+        print(f"CLIP processor loaded: {model_name}")
+        clip_model = CLIPTextModel.from_pretrained(model_name)
+        clip_model = clip_model.cuda()
+        print(f"CLIP model loaded: {model_name}")
+
+        print("Using Global Object Names: ", GLOBAL_OBJECT_NAMES_PATH)
+        print("Using Random Template: ", USE_RANDOM_TEMPLATE)
+        print("Templates: ", TEMPLATES)
+        if os.path.exists(GLOBAL_OBJECT_NAMES_PATH):
+            with open(GLOBAL_OBJECT_NAMES_PATH, 'r') as f:
+                object_vocab_data  = json.load(f)
+        else:
+            raise FileNotFoundError(f"Global object names file not found at {GLOBAL_OBJECT_NAMES_PATH}")
+        self.object_vocab = {name: idx for idx, name in enumerate(sorted(object_vocab_data.keys()))}
+        print(f"Loaded {len(self.object_vocab)} global object names from the file.")
+        self.len_object_vocab = len(self.object_vocab)
+
+        prompts = []
+        for object_name in self.object_vocab.keys():
+            if USE_RANDOM_TEMPLATE:
+                template = random.choice(TEMPLATES)
+            else:
+                # Use first template to be consistent
+                template = TEMPLATES[0]
+            prompt = template.format(object_name)
+            prompts.append(prompt)
+
+        with torch.no_grad():
+            lang_tokens = clip_tokenizer(text=prompts, return_tensors="pt", padding=True, truncation=True, max_length=77)
+            for name in lang_tokens.data:
+                lang_tokens.data[name] = lang_tokens.data[name].cuda()
+            clip_outputs = clip_model(**lang_tokens)
+            sentence_feature = clip_outputs.pooler_output
+            attention_mask = lang_tokens.data['attention_mask']
+
+        return sentence_feature, attention_mask
+
+    def compute_global_scene_object_bce_loss(self, projected_visual_features, object_prompt_features, batch_object_names, scenes_len):
+        """
+        Args:
+            projected_visual_features: [B_utterances, n_queries, 64]
+            object_prompt_features: [n_objects, 768]
+            batch_object_names: List of lists of object names for each scene
+            scenes_len: List indicating number of utterances per scene
+        """
+        # 1. Project object features to match visual feature dimension
+        if not hasattr(self, 'object_contrastive_projection'):
+            self.object_contrastive_projection = nn.Linear(768, 64).to(projected_visual_features.device)
+        
+        projected_object_features = self.object_contrastive_projection(object_prompt_features)  # [641, 64]
+        text_features = F.normalize(projected_object_features, dim=-1)
+        
+        # 2. Select representative visual features for each utterance (using mean pooling)
+        selected_visual_features = projected_visual_features.mean(dim=1)  # [B_utterances, 64]
+        visual_features = F.normalize(selected_visual_features, dim=-1)
+        
+        # 3. Create mapping from utterance to scene using scenes_len
+        B_utterances = visual_features.shape[0]
+        N = self.len_object_vocab
+        
+        # Map each utterance to its scene
+        utterance_to_scene = []
+        for scene_idx, num_utterances in enumerate(scenes_len):
+            utterance_to_scene.extend([scene_idx] * num_utterances)
+        
+        # Verify the mapping length matches the batch size
+        assert len(utterance_to_scene) == B_utterances, f"Mapping length {len(utterance_to_scene)} doesn't match batch {B_utterances}"
+        
+        # 4. Create binary labels
+        labels = torch.zeros((B_utterances, N), device=visual_features.device)
+        for i in range(B_utterances):
+            scene_idx = utterance_to_scene[i]
+            for obj in batch_object_names[scene_idx]:
+                if obj in self.object_vocab:  # Ensure object is in vocabulary
+                    labels[i, self.object_vocab[obj]] = 1.0
+        
+        # 5. Calculate logits and loss
+        logits = torch.matmul(visual_features, text_features.T)
+        
+        weight = torch.ones_like(labels)
+        weight[labels == 1] = 20.0
+        
+        return F.binary_cross_entropy_with_logits(logits, labels, weight=weight)

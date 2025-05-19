@@ -31,3 +31,6 @@ ipdn/lib/
 pointnet2/pointnet2.egg-info/
 pointnet2/
 *.pyc
+*.cpython-38.pyc
+__pycache__/
+ipdn/torch/
