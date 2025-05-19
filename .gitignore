@@ -20,7 +20,6 @@ logs/
 logs_eval/
 scripts_cluster/
 *.sh
-*.err
 tmp/
 logs_old/
 data_multi3dreder/
