@@ -135,41 +135,125 @@ class FFN(nn.Module):
         if norm: output = self.norm(output)
         return output
 
-class ObjectCrossAttention(nn.Module):
-    def __init__(self, d_model, nhead, dropout=0.0):
-        super().__init__()
-        self.attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
-        self.norm = nn.LayerNorm(d_model)
-        self.dropout = nn.Dropout(dropout)
+# class ObjectCrossAttention(nn.Module):
+#     def __init__(self, d_model, nhead, dropout=0.0):
+#         super().__init__()
+#         self.attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=True)
+#         self.norm = nn.LayerNorm(d_model)
+#         self.dropout = nn.Dropout(dropout)
         
-    def forward(self, scene_object_embeds, query, batch_offsets):
+#     def forward(self, scene_object_embeds, query, scenes_len):
+#         """
+#         Args:
+#             scene_object_embeds: List of tensors [(num_objs1, d_model), (num_objs2, d_model)...]
+#             query: Tensor [B_utterances, num_queries, d_model]
+#             scenes_len: List indicating number of utterances per scene [5, 6, ...]
+#         """
+#         device = query.device
+#         B_utterances = query.shape[0]
+#         d_model = query.shape[-1]
+
+#         # Verify scenes_len matches the total utterances
+#         assert sum(scenes_len) == B_utterances, f"Sum of scenes_len {sum(scenes_len)} doesn't match batch size {B_utterances}"
+        
+#         # Create utterance-to-scene mapping
+#         utterance_to_scene = []
+#         for scene_idx, num_utterances in enumerate(scenes_len):
+#             utterance_to_scene.extend([scene_idx] * num_utterances)
+        
+#         # Find max objects across all scenes for padding
+#         max_objects = max([obj_emb.shape[0] for obj_emb in scene_object_embeds])
+        
+#         # Create padded tensor for all utterances
+#         padded_objs = torch.zeros(B_utterances, max_objects, 768, device=device)
+#         attention_mask = torch.ones(B_utterances, max_objects, device=device, dtype=torch.bool)
+        
+#         # Fill in the padded tensor with appropriate scene objects for each utterance
+#         for utterance_idx in range(B_utterances):
+#             scene_idx = utterance_to_scene[utterance_idx]
+#             obj_emb = scene_object_embeds[scene_idx]
+#             num_objs = obj_emb.shape[0]
+            
+#             padded_objs[utterance_idx, :num_objs] = obj_emb
+#             attention_mask[utterance_idx, :num_objs] = False  # False = attend to this position
+        
+#         # Perform attention with padding mask
+#         output, attention_weights, _ = self.attn(
+#             query, padded_objs, padded_objs, 
+#             key_padding_mask=attention_mask
+#         )
+        
+#         # Apply residual connection and normalization
+#         output = self.dropout(output)
+#         output = output + query
+#         output = self.norm(output)
+        
+#         return output, attention_weights, None
+
+class HighDimObjectCrossAttention(nn.Module):
+    def __init__(self, query_dim=256, obj_dim=768, nhead=8, dropout=0.0, output_projection=None):
+        """
+        Cross-attention that operates in high dimensions and projects back to model dimension.
+        
+        Args:
+            query_dim: The dimension of the query tensor (typically 256)
+            obj_dim: The dimension of the object embeddings (typically 768 for CLIP)
+            nhead: Number of attention heads
+            dropout: Dropout probability
+            output_projection: Shared projection layer from obj_dim to query_dim
+        """
+        super().__init__()
+        
+        # Ensure head_dim is divisible by nhead
+        assert obj_dim % nhead == 0, f"obj_dim {obj_dim} must be divisible by nhead {nhead}"
+        
+        # Projection layers
+        self.query_proj = nn.Linear(query_dim, obj_dim)
+        self.key_proj = nn.Linear(obj_dim, obj_dim)
+        self.value_proj = nn.Linear(obj_dim, obj_dim)
+        
+        self.output_projection = output_projection
+   
+        # Multi-head attention parameters
+        self.nhead = nhead
+        self.head_dim = obj_dim // nhead
+        self.scale = self.head_dim ** -0.5
+        
+        # Normalization and dropout
+        self.dropout = nn.Dropout(dropout)
+        self.attn_dropout = nn.Dropout(dropout)
+        self.norm = nn.LayerNorm(query_dim)
+        
+    def _reshape_for_multihead(self, x, batch_size, seq_len):
+        """Reshape input tensor for multi-head attention"""
+        return x.view(batch_size, seq_len, self.nhead, self.head_dim).transpose(1, 2)
+        
+    def forward(self, scene_object_embeds, query, scenes_len):
         """
         Args:
-            scene_object_embeds: List of tensors [(num_objs1, d_model), (num_objs2, d_model)...]
-            query: Tensor [B_utterances, num_queries, d_model]
-            batch_offsets: Tensor indicating scene boundaries
+            scene_object_embeds: List of tensors [(num_objs1, 768), (num_objs2, 768)...]
+            query: Tensor [B_utterances, num_queries, 256]
+            scenes_len: List indicating number of utterances per scene
         """
         device = query.device
-        B_utterances = query.shape[0]
-        num_scenes = len(scene_object_embeds)
+        batch_size = query.shape[0]
+        n_queries = query.shape[1]
+        # num_scenes = len(scene_object_embeds)
         
-        # 1. Create a mapping from utterance index to scene index
+        # Create utterance-to-scene mapping
         utterance_to_scene = []
-        for scene_idx in range(num_scenes):
-            start_idx = batch_offsets[scene_idx]
-            end_idx = batch_offsets[scene_idx + 1]
-            num_utterances = end_idx - start_idx
+        for scene_idx, num_utterances in enumerate(scenes_len):
             utterance_to_scene.extend([scene_idx] * num_utterances)
         
-        # 2. Find max objects across all scenes for padding
+        # Find max objects across all scenes for padding
         max_objects = max([obj_emb.shape[0] for obj_emb in scene_object_embeds])
         
-        # 3. Create padded tensor for all utterances
-        padded_objs = torch.zeros(B_utterances, max_objects, query.shape[-1], device=device)
-        attention_mask = torch.ones(B_utterances, max_objects, device=device, dtype=torch.bool)
+        # Create padded tensor for all utterances (using original CLIP dimension)
+        padded_objs = torch.zeros(batch_size, max_objects, scene_object_embeds[0].shape[-1], device=device)
+        attention_mask = torch.ones(batch_size, max_objects, device=device, dtype=torch.bool)
         
-        # 4. Fill in the padded tensor with appropriate scene objects for each utterance
-        for utterance_idx in range(B_utterances):
+        # Fill in the padded tensor with appropriate scene objects
+        for utterance_idx in range(batch_size):
             scene_idx = utterance_to_scene[utterance_idx]
             obj_emb = scene_object_embeds[scene_idx]
             num_objs = obj_emb.shape[0]
@@ -177,14 +261,45 @@ class ObjectCrossAttention(nn.Module):
             padded_objs[utterance_idx, :num_objs] = obj_emb
             attention_mask[utterance_idx, :num_objs] = False  # False = attend to this position
         
-        # 5. Perform attention with padding mask
-        output, _, _ = self.attn(query, padded_objs, padded_objs, key_padding_mask=attention_mask)
+        # Project query, key, value to high-dimensional space
+        q = self.query_proj(query)  # [batch_size, n_queries, obj_dim]
+        k = self.key_proj(padded_objs)  # [batch_size, max_objects, obj_dim]
+        v = self.value_proj(padded_objs)  # [batch_size, max_objects, obj_dim]
+        
+        # Reshape for multi-head attention
+        q = self._reshape_for_multihead(q, batch_size, n_queries)  # [batch_size, nhead, n_queries, head_dim]
+        k = self._reshape_for_multihead(k, batch_size, max_objects)  # [batch_size, nhead, max_objects, head_dim]
+        v = self._reshape_for_multihead(v, batch_size, max_objects)  # [batch_size, nhead, max_objects, head_dim]
+        
+        # Compute attention scores
+        attn_scores = torch.matmul(q, k.transpose(-2, -1)) * self.scale  # [batch_size, nhead, n_queries, max_objects]
+        
+        # Apply mask to prevent attention to padding
+        if attention_mask is not None:
+            # Expand mask for multi-head attention
+            expanded_mask = attention_mask.unsqueeze(1).unsqueeze(2)  # [batch_size, 1, 1, max_objects]
+            attn_scores = attn_scores.masked_fill(expanded_mask, -1e9)
+        
+        # Apply softmax and dropout
+        attn_weights = F.softmax(attn_scores, dim=-1)  # [batch_size, nhead, n_queries, max_objects]
+        attn_weights = self.attn_dropout(attn_weights)
+        
+        # Apply attention weights to values
+        context = torch.matmul(attn_weights, v)  # [batch_size, nhead, n_queries, head_dim]
+        
+        # Reshape back to regular tensor format
+        context = context.transpose(1, 2).contiguous().view(batch_size, n_queries, -1)  # [batch_size, n_queries, obj_dim]
+        
+        # Project back to query dimension using shared projection
+        output = self.output_projection(context)  # [batch_size, n_queries, query_dim]
+        
+        # Apply residual connection and normalization
         output = self.dropout(output)
         output = output + query
         output = self.norm(output)
         
-        return output, None, None  # Match return signature of other attention layers
-       
+        return output, attn_weights, None  # Match return signature of other attention layers
+    
 class DEC(nn.Module):
     """
     in_channels List[int] (4,) [64,96,128,160]
@@ -230,6 +345,12 @@ class DEC(nn.Module):
 
         self.query_generator = nn.Sequential(nn.Linear(d_model, d_model),nn.ReLU(),nn.Linear(d_model, d_model),nn.ReLU(),nn.Linear(d_model, d_model))
         
+        self.object_projection = nn.Sequential(
+            nn.Linear(768, 512),
+            nn.ReLU(),
+            nn.Linear(512, d_model)  # d_model is 256
+        )
+
         # DDI and SWA
         self.swa_layers = nn.ModuleList([])
         self.rra_layers = nn.ModuleList([])
@@ -255,7 +376,15 @@ class DEC(nn.Module):
                 self.lla_layers.append(SelfAttentionLayer(d_model, nhead, dropout))
                 self.lsa_layers.append(CrossAttentionLayer(d_model, nhead, dropout))
                 self.lsa_ffn_layers.append(FFN(d_model, hidden_dim, dropout, activation_fn))    
-            self.obj_att_layers.append(ObjectCrossAttention(d_model, nhead, dropout))
+            self.obj_att_layers.append(
+                HighDimObjectCrossAttention(
+                    query_dim=d_model, 
+                    obj_dim=768, 
+                    nhead=nhead, 
+                    dropout=dropout,
+                    output_projection=self.object_projection # Pass shared projection
+                )
+            )
 
         self.sem_cls_head = ThreeLayerMLP(d_model, self.num_class)
 
@@ -280,13 +409,8 @@ class DEC(nn.Module):
         
         self.scg_head = SelfAttentionLayer(d_model, nhead, dropout=0, glu=True)
         
-        self.object_projection = nn.Sequential(
-            nn.Linear(768, 512),
-            nn.ReLU(),
-            nn.Linear(512, d_model)  # d_model is 256
-        )
         
-    def forward_iter_pred(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None, scene_object_embeds=None):
+    def forward_iter_pred(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None, scene_object_embeds=None, scenes_len=None):
         """
         x [B*M, inchannel]
         """
@@ -351,10 +475,10 @@ class DEC(nn.Module):
         init_lang_mask = lang_masks
         #lang_query = lang_feats
         
-        if scene_object_embeds is not None:
-            projected_scene_embeds = []
-            for scene_embeds in scene_object_embeds:
-                projected_scene_embeds.append(self.object_projection(scene_embeds))
+        # if scene_object_embeds is not None:
+        #     projected_scene_embeds = []
+        #     for scene_embeds in scene_object_embeds:
+        #         projected_scene_embeds.append(self.object_projection(scene_embeds))
 
         # multi-round
         l = 0
@@ -388,7 +512,7 @@ class DEC(nn.Module):
                 lang_query = self.lsa_ffn_layers[i](lang_query)
 
             if scene_object_embeds is not None:
-                query_obj, _, _ = self.obj_att_layers[i](projected_scene_embeds, query, batch_offsets)
+                query_obj, _, _ = self.obj_att_layers[i](scene_object_embeds, query, scenes_len)
                 query = query + query_rla + query_obj + query_rra
             else:
                 query = query + query_rla + query_rra
@@ -487,8 +611,8 @@ class DEC(nn.Module):
                 scg_mask[i,j,ind[i][j]] = True
         return scg_mask
     
-    def forward(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None, scene_object_embeds=None):
+    def forward(self, x, fps_seed_sp, batch_offsets, lang_feats=None, lang_masks=None, sp_pos=None, feats_2d=None, scene_object_embeds=None, scenes_len=None):
         if self.iter_pred:
-            return self.forward_iter_pred(x, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_pos, feats_2d, scene_object_embeds)
+            return self.forward_iter_pred(x, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_pos, feats_2d, scene_object_embeds, scenes_len)
         else:
             raise NotImplementedError

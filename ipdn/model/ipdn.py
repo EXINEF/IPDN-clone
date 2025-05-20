@@ -158,7 +158,7 @@ class IPDN(nn.Module):
         for i, scene_id in enumerate(scan_ids):
             scene_object_embeds.append(self.get_scene_object_embeddings(scene_id))
 
-        out = self.dec(sp_feats, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_coords_float, feats_2d, scene_object_embeds)
+        out = self.dec(sp_feats, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_coords_float, feats_2d, scene_object_embeds, scenes_len)
         
         loss_scene_obj = self.compute_global_scene_object_bce_loss(
             out['proj_queries'], 
