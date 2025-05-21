@@ -23,8 +23,14 @@ import random
 LOSS_SCENE_OBJ_WEIGHT = 1
 print(f"LOSS_SCENE_OBJ_WEIGHT: {LOSS_SCENE_OBJ_WEIGHT}")
 # print("USING SO_WEIGHT")
-# GLOBAL_OBJECT_NAMES_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/global_object_names__20250507-101601_winsize20_minocc6.json"
-GLOBAL_OBJECT_NAMES_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/global_object_names__20250507-101601_winsize20_minocc6.json"
+
+# BOOL_GLOBAL_OBJECT_NAMES_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/global_object_names__20250507-101601_winsize20_minocc6.json"
+# PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
+# SCENE_LIST_PATH = "/nfs/data_todi/jli/Alessio_works/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
+
+BOOL_GLOBAL_OBJECT_NAMES_PATH = "/home/disi/Alessio/IPDN-clone/bool_claude_DMA_preprocess_global_object_names__20250507-101601_winsize20_minocc6.json"
+PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
+SCENE_LIST_PATH = "/home/disi/Alessio/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
 
 
 USE_RANDOM_TEMPLATE = False
@@ -325,12 +331,30 @@ class IPDN(nn.Module):
             Tensor of shape [num_classes, 768]
         """
 
-        # PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
-        # SCENE_LIST_PATH = "/nfs/data_todi/jli/Alessio_works/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
+        print("Using Preprocessed Filtered Object IDs: ", PREPROCESSED_FILTERED_OBJECT_IDS_PATH)
 
-        PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
-        SCENE_LIST_PATH = "/home/disi/Alessio/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
- 
+        model_name = 'openai/clip-vit-large-patch14'
+        clip_tokenizer = CLIPTokenizer.from_pretrained(model_name)
+        print(f"CLIP processor loaded: {model_name}")
+        clip_model = CLIPTextModel.from_pretrained(model_name)
+        clip_model = clip_model.cuda()
+        print(f"CLIP model loaded: {model_name}")
+
+        # print("Using Global Object Names: ", GLOBAL_OBJECT_NAMES_PATH)
+        print("Using Random Template: ", USE_RANDOM_TEMPLATE)
+        print("Templates: ", TEMPLATES)
+        print("Using Bool Global Object Names: ", BOOL_GLOBAL_OBJECT_NAMES_PATH)
+        if os.path.exists(BOOL_GLOBAL_OBJECT_NAMES_PATH):
+            with open(BOOL_GLOBAL_OBJECT_NAMES_PATH, 'r') as f:
+                object_vocab_data  = json.load(f)
+        else:
+            raise FileNotFoundError(f"Bool Global object names file not found at {BOOL_GLOBAL_OBJECT_NAMES_PATH}")
+
+        filtered_sorted_items = sorted((name for name, value in object_vocab_data.items() if value))
+        self.object_vocab = {name: idx for idx, name in enumerate(filtered_sorted_items)}
+        print(f"Loaded {len(self.object_vocab)} global object names from the file.")
+        self.len_object_vocab = len(self.object_vocab)
+
         # load each line in the file in  a list
         with open(SCENE_LIST_PATH, 'r') as f:
             scene_list = f.readlines()
@@ -346,31 +370,12 @@ class IPDN(nn.Module):
                     object_names = json.load(f)
             else:
                 raise FileNotFoundError(f"Filtered object IDs file not found for scene {scene_id}")
+            # Filter object names to only include those in the object vocabulary
+            object_names = {name: value for name, value in object_names.items() if name in self.object_vocab}
             object_names = list(object_names.keys())
             self.object_prompt_names[scene_id] = object_names
         
         print(f"Loaded {len(self.object_prompt_names)} scene object names from the file.")
-
-        print("Using Preprocessed Filtered Object IDs: ", PREPROCESSED_FILTERED_OBJECT_IDS_PATH)
-
-        model_name = 'openai/clip-vit-large-patch14'
-        clip_tokenizer = CLIPTokenizer.from_pretrained(model_name)
-        print(f"CLIP processor loaded: {model_name}")
-        clip_model = CLIPTextModel.from_pretrained(model_name)
-        clip_model = clip_model.cuda()
-        print(f"CLIP model loaded: {model_name}")
-
-        print("Using Global Object Names: ", GLOBAL_OBJECT_NAMES_PATH)
-        print("Using Random Template: ", USE_RANDOM_TEMPLATE)
-        print("Templates: ", TEMPLATES)
-        if os.path.exists(GLOBAL_OBJECT_NAMES_PATH):
-            with open(GLOBAL_OBJECT_NAMES_PATH, 'r') as f:
-                object_vocab_data  = json.load(f)
-        else:
-            raise FileNotFoundError(f"Global object names file not found at {GLOBAL_OBJECT_NAMES_PATH}")
-        self.object_vocab = {name: idx for idx, name in enumerate(sorted(object_vocab_data.keys()))}
-        print(f"Loaded {len(self.object_vocab)} global object names from the file.")
-        self.len_object_vocab = len(self.object_vocab)
 
         prompts = []
         for object_name in self.object_vocab.keys():
