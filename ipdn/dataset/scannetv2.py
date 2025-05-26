@@ -15,7 +15,8 @@ import dgl
 from scipy import sparse as sp
 import sng_parser
 from torch_scatter import scatter_max, scatter_mean
-from transformers import RobertaTokenizerFast
+from transformers import RobertaTokenizerFast, CLIPTokenizerFast
+from ipdn.dataset.mine_configs import TEXT_ENCODER, CLIP_MODEL
 
 MAX_NUM_OBJ = 132
 
@@ -106,7 +107,15 @@ class ScanNetDataset_sample_graph_edge(Dataset):
         self.nyu40id2class = self._get_nyu40id2class()
         self.sem2nyu = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
 
-        self.tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
+        if TEXT_ENCODER == 'ROBERTA':
+            self.tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
+            print('Using RobertaTokenizerFast for text encoding: ', 'roberta-base')
+        
+        elif TEXT_ENCODER == 'CLIP':
+            self.tokenizer = CLIPTokenizerFast.from_pretrained(CLIP_MODEL)
+            print('Using CLIPTokenizerFast for text encoding: ', CLIP_MODEL)
+        else:
+            raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
 
     def load_scene_graphs(self):
         scene_graphs = {}
@@ -476,9 +485,15 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             lang_utterances.extend(lang_utterance)
             dense_mapss.extend(dense_maps)
 
-        token_dict = self.tokenizer.batch_encode_plus(
-            lang_utterances, padding="longest", return_tensors="pt"
-        )
+        if TEXT_ENCODER == 'ROBERTA':
+            token_dict = self.tokenizer.batch_encode_plus(
+                lang_utterances, padding="longest", return_tensors="pt"
+            )
+        elif TEXT_ENCODER == 'CLIP':
+            token_dict = self.tokenizer(text=lang_utterances, return_tensors="pt", padding=True, truncation=True, max_length=77)
+        else:
+            raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
+        
         lang_tokenss = token_dict['input_ids']
         lang_masks = token_dict['attention_mask']
 
@@ -580,6 +595,15 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             [' '.join(anno['utterance'].replace(',', ' ,').split())],
             padding="longest", return_tensors="pt"
         )
+        if TEXT_ENCODER == 'ROBERTA':
+            tokenized = self.tokenizer.batch_encode_plus(
+                [' '.join(anno['utterance'].replace(',', ' ,').split())],
+                padding="longest", return_tensors="pt"
+            )
+        elif TEXT_ENCODER == 'CLIP':
+            tokenized = self.tokenizer(text=[' '.join(anno['utterance'].replace(',', ' ,').split())], return_tensors="pt", padding=True, truncation=True, max_length=77)
+        else:
+            raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
 
         target_positive_map = np.zeros((MAX_NUM_OBJ, 256))
         modify_positive_map = np.zeros((MAX_NUM_OBJ, 256))

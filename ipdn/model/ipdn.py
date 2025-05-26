@@ -19,35 +19,38 @@ import os
 import json
 from transformers import CLIPTokenizer, CLIPTextModel
 import random
+from ipdn.dataset.mine_configs import TEXT_ENCODER, CLIP_MODEL
 
 LOSS_SCENE_OBJ_WEIGHT = 1
 print(f"LOSS_SCENE_OBJ_WEIGHT: {LOSS_SCENE_OBJ_WEIGHT}")
 # print("USING SO_WEIGHT")
+WEIGHT = 20.0
+print(f"WEIGHT: {WEIGHT}")
 
-# BOOL_GLOBAL_OBJECT_NAMES_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/global_object_names__20250507-101601_winsize20_minocc6.json"
-# PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
-# SCENE_LIST_PATH = "/nfs/data_todi/jli/Alessio_works/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
+BOOL_GLOBAL_OBJECT_NAMES_PATH = "/nfs/data_todi/jli/Alessio_works/IPDN-clone/bool_claude_DMA_preprocess_global_object_names__20250507-101601_winsize20_minocc6.json"
+PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
+SCENE_LIST_PATH = "/nfs/data_todi/jli/Alessio_works/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
 
-BOOL_GLOBAL_OBJECT_NAMES_PATH = "/home/disi/Alessio/IPDN-clone/bool_claude_DMA_preprocess_global_object_names__20250507-101601_winsize20_minocc6.json"
-PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
-SCENE_LIST_PATH = "/home/disi/Alessio/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
+# BOOL_GLOBAL_OBJECT_NAMES_PATH = "/home/disi/Alessio/IPDN-clone/bool_claude_DMA_preprocess_global_object_names__20250507-101601_winsize20_minocc6.json"
+# PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/home/disi/Alessio/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
+# SCENE_LIST_PATH = "/home/disi/Alessio/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
 
 
 USE_RANDOM_TEMPLATE = False
 TEMPLATES = [
     "There is a {} in the scene",
-    "A scene with {}.",
-    "A scene containing {}.",
-    "A room with {}.",
-    "A room containing {}.",
-    "There is {} in the scene.",
-    "There is {} in the room.",
-    "{} is present in the scene.",
-    "{} is present in the room.",
-    "The scene has {}.",
-    "The room has {}.",
-    "The scene contains {}.",
-    "The room contains {}.",
+    "A scene with {}",
+    "A scene containing {}",
+    "A room with {}",
+    "A room containing {}",
+    "There is {} in the scene",
+    "There is {} in the room",
+    "{} is present in the scene",
+    "{} is present in the room",
+    "In the scene there is a {}",
+    "In the room there is a {}",
+    "The scene contains {}",
+    "The room contains {}",
 ]
 
 
@@ -101,7 +104,16 @@ class IPDN(nn.Module):
 
         self.decoder_param = dec
         self.fps_num = fps_num
-        self.text_encoder = RobertaModel.from_pretrained('roberta-base')
+        
+        if TEXT_ENCODER == 'ROBERTA':
+            self.text_encoder = RobertaModel.from_pretrained('roberta-base')
+            print('Using RobertaModel for text encoding: roberta-base')
+        elif TEXT_ENCODER == 'CLIP':
+            self.text_encoder = CLIPTextModel.from_pretrained(CLIP_MODEL)
+            print('Using CLIPTokenizerFast for text encoding: ', CLIP_MODEL)
+        else:
+            raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
+       
 
         self.sampling_module = sampling_module
         self.dec = DEC(**dec, sampling_module=sampling_module, in_channel=media)
@@ -157,7 +169,14 @@ class IPDN(nn.Module):
         sp_coords_float = scatter_mean(coords_float, superpoints, dim=0)
 
         sp_feats, sp_coords_float, fps_seed_sp, batch_offsets, sp_ins_labels, feats_2d = self.expand_and_fps(sp_feats, sp_coords_float, batch_offsets, sp_ins_labels, scenes_len, feats_2d, mode='tr')
-        lang_feats = self.text_encoder(lang_tokenss, attention_mask=lang_masks)[0]
+        
+        if TEXT_ENCODER == 'ROBERTA':
+            lang_feats = self.text_encoder(lang_tokenss, attention_mask=lang_masks)[0]
+        elif TEXT_ENCODER == 'CLIP':
+            clip_outputs = self.text_encoder(lang_tokenss)
+            lang_feats = clip_outputs.last_hidden_state
+        else:
+            raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
 
         batch_object_names = self.get_batch_object_names(scan_ids)
         scene_object_embeds = []
@@ -166,18 +185,18 @@ class IPDN(nn.Module):
 
         out = self.dec(sp_feats, fps_seed_sp, batch_offsets, lang_feats, lang_masks, sp_coords_float, feats_2d, scene_object_embeds, scenes_len)
         
+        loss, loss_dict = self.criterion(out, gt_spmasks, sp_ref_masks, object_idss, sp_ins_labels, dense_maps, lang_masks, fps_seed_sp, sp_coords_float, batch_offsets)
+        
         loss_scene_obj = self.compute_global_scene_object_bce_loss(
             out['proj_queries'], 
             self.object_prompt_features, 
             batch_object_names,
             scenes_len
         )
-        
-        loss, loss_dict = self.criterion(out, gt_spmasks, sp_ref_masks, object_idss, sp_ins_labels, dense_maps, lang_masks, fps_seed_sp, sp_coords_float, batch_offsets)
-        
+        loss_scene_obj = loss_scene_obj * LOSS_SCENE_OBJ_WEIGHT
+
         loss_dict['loss_scene_obj'] = loss_scene_obj
-        loss = loss + LOSS_SCENE_OBJ_WEIGHT * loss_scene_obj
-        return loss, loss_dict
+        return loss, loss_dict, loss_scene_obj
 
     def get_batch_object_names(self, scan_ids):
         batch_object_names = []
@@ -407,6 +426,9 @@ class IPDN(nn.Module):
         """
         # 1. Project object features to match visual feature dimension
         if not hasattr(self, 'object_contrastive_projection'):
+            # print("Creating object contrastive projection layer")
+            # exit()
+            # // TODO: fix here, this will not make the model learn a lot
             self.object_contrastive_projection = nn.Linear(768, 64).to(projected_visual_features.device)
         
         projected_object_features = self.object_contrastive_projection(object_prompt_features)  # [641, 64]
@@ -440,6 +462,6 @@ class IPDN(nn.Module):
         logits = torch.matmul(visual_features, text_features.T)
         
         weight = torch.ones_like(labels)
-        weight[labels == 1] = 20.0
+        weight[labels == 1] = WEIGHT
         
         return F.binary_cross_entropy_with_logits(logits, labels, weight=weight)

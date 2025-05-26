@@ -1,0 +1,26 @@
+- GRES Test con modello3, con random true e loss_weight a 1.2 -> training_test_loss1_2_gres_3new_random
+- RES Test con modello3, con random true e loss_weight a 1.2 -> training_test_loss1_2_res_3new_random
+- GRES Test con modello3, con random false e loss_weight a 1.5 -> training_test_loss1_5_gres_3new
+- GRES Test con modello3, con random false e loss_weight a 2 -> training_test_loss2_gres_3new
+
+
+4new vuol dire che il modello è stato addestrato con la loss messa fuori dal metodo e il peso aggiornato correttamente.
+
+loss_scene_obj = self.compute_global_scene_object_bce_loss(
+    out['proj_queries'], 
+    self.object_prompt_features, 
+    batch_object_names,
+    scenes_len
+)
+loss_scene_obj = loss_scene_obj * LOSS_SCENE_OBJ_WEIGHT
+
+loss, loss_dict = self.criterion(out, gt_spmasks, sp_ref_masks, object_idss, sp_ins_labels, dense_maps, lang_masks, fps_seed_sp, sp_coords_float, batch_offsets)
+
+loss_dict['loss_scene_obj'] = loss_scene_obj
+return loss, loss_dict, loss_scene_obj
+
+# loss, log_vars, loss_scene_obj = model(batch, mode='loss')
+
+
+
+SOTA results of IPDN are miou 50,2 on RES and miou 51,7 on GRES

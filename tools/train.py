@@ -69,7 +69,7 @@ def train(epoch, model, dataloader, optimizer, lr_scheduler, cfg, logger, writer
         data_time.update(time.time() - end)
         # forward
         # torch.autograd.set_detect_anomaly(True)
-        loss, log_vars = model(batch, mode='loss')
+        loss, log_vars, loss_scene_obj = model(batch, mode='loss')
         # reduce log_vars for multi-gpu
         log_vars = gorilla.reduce_dict(log_vars, average=True)
         if gorilla.is_main_process():
@@ -81,7 +81,9 @@ def train(epoch, model, dataloader, optimizer, lr_scheduler, cfg, logger, writer
 
         # backward
         optimizer.zero_grad()
-        loss.backward()
+        optimizer.zero_grad()
+        total_loss = loss + loss_scene_obj
+        total_loss.backward()
         #with torch.autograd.detect_anomaly():
         #     loss.backward()
         
