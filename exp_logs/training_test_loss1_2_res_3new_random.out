@@ -1,0 +1,36 @@
+Thu May 22 13:31:06 2025       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.161.07             Driver Version: 535.161.07   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX A6000               On  | 00000000:41:00.0 Off |                  Off |
+| 30%   23C    P8              21W / 300W |      1MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+LOSS_SCENE_OBJ_WEIGHT: 1.2
+set CUDA_VISIBLE_DEVICES as 0
+Using Preprocessed Filtered Object IDs:  /nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6
+CLIP processor loaded: openai/clip-vit-large-patch14
+CLIP model loaded: openai/clip-vit-large-patch14
+Using Random Template:  True
+Templates:  ['There is a {} in the scene', 'A scene with {}', 'A scene containing {}', 'A room with {}', 'A room containing {}', 'There is {} in the scene', 'There is {} in the room', '{} is present in the scene', '{} is present in the room', 'In the scene there is a {}', 'In the room there is a {}', 'The scene contains {}', 'The room contains {}']
+Using Bool Global Object Names:  /nfs/data_todi/jli/Alessio_works/IPDN-clone/bool_claude_DMA_preprocess_global_object_names__20250507-101601_winsize20_minocc6.json
+Loaded 495 global object names from the file.
+Loaded 1513 scene object names from the file.
+Found 1201 scene graph files in train split.
+Folder:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/
+Scene graphs path:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/scanrefer/scene_graphs_new_train.json
+Found 312 scene graph files in val split.
+Folder:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/
+Scene graphs path:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/scanrefer/scene_graphs_new_val.json
