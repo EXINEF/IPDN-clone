@@ -20,23 +20,35 @@ FILES_TO_ANALYZE = [
     ###
     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/training_roberta_gres_SOTA.err",
 
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_gres_3new.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_gres_3new.err",
 
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss2_gres_3new.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_5_gres_3new.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss2_gres_3new.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_5_gres_3new.err",
 
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_gres_2new.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new_random.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_gres_2new.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new_random.err",
 
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new_weight200.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new_weight100.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss10_gres_7new.err",
+    #"/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new_weight200.err",
+    #"/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_3new_weight100.err",
+    #"/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss10_gres_7new.err",
 
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss100_gres_3new.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_4new.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_4new_clip.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_4new_clip.err",
+    #"/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss100_gres_3new.err",
+    #"/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_2_gres_4new.err",
+
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_4new_clip.err",
+
+
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_5new_clip.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_5new_roberta.err",
+
+
+
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_7new_roberta_norm.err",
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_7new_clip.err",
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_7new_roberta.err",
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs/training_test_loss1_gres_6new_roberta.err",
+
 ]
 
 def get_dataset_type(file_path):

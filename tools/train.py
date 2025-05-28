@@ -274,6 +274,10 @@ def main(args):
     optimizer = gorilla.build_optimizer(model, cfg.optimizer)
     lr_scheduler = gorilla.build_lr_scheduler(optimizer, cfg.lr_scheduler)
 
+    print(f'Optimizer: {cfg.optimizer.type}')
+    print(f'Learning rate scheduler: {cfg.lr_scheduler.type}')
+    print(f'Complete model architecture: {model}')
+
     # pretrain or resume
     start_epoch = 1
     if args.resume:

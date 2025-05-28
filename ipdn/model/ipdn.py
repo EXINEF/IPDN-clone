@@ -113,8 +113,25 @@ class IPDN(nn.Module):
             print('Using CLIPTokenizerFast for text encoding: ', CLIP_MODEL)
         else:
             raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
-       
 
+        self.object_prompt_features, _ = self.precompute_object_prompt_features()
+        self.d_model = 256
+        self.visual_scene_obj_projection = nn.Sequential(
+            nn.Linear(64, 128),  # Project from 64 (proj_queries) to intermediate
+            nn.ReLU(),
+            nn.Dropout(0.15),
+            nn.Linear(128, 256),  # Project to 256 to match text features
+            nn.Dropout(0.15),
+        )
+
+        self.prompts_object_projection = nn.Sequential(
+            nn.Linear(768, 512),
+            nn.ReLU(),
+            nn.Dropout(0.15),
+            nn.Linear(512, self.d_model),  # d_model is 256
+            nn.Dropout(0.15),
+        )
+       
         self.sampling_module = sampling_module
         self.dec = DEC(**dec, sampling_module=sampling_module, in_channel=media)
         # criterion
@@ -137,7 +154,7 @@ class IPDN(nn.Module):
                 for param in module.parameters():
                     param.requires_grad = False
 
-        self.object_prompt_features, _ = self.precompute_object_prompt_features()
+        
 
     def init_weights(self):
         for m in self.modules():
@@ -188,7 +205,7 @@ class IPDN(nn.Module):
         loss, loss_dict = self.criterion(out, gt_spmasks, sp_ref_masks, object_idss, sp_ins_labels, dense_maps, lang_masks, fps_seed_sp, sp_coords_float, batch_offsets)
         
         loss_scene_obj = self.compute_global_scene_object_bce_loss(
-            out['proj_queries'], 
+            out['query_features'], 
             self.object_prompt_features, 
             batch_object_names,
             scenes_len
@@ -350,19 +367,19 @@ class IPDN(nn.Module):
             Tensor of shape [num_classes, 768]
         """
 
-        print("Using Preprocessed Filtered Object IDs: ", PREPROCESSED_FILTERED_OBJECT_IDS_PATH)
+        print("\n\nUsing Preprocessed Filtered Object IDs: ", PREPROCESSED_FILTERED_OBJECT_IDS_PATH)
 
         model_name = 'openai/clip-vit-large-patch14'
         clip_tokenizer = CLIPTokenizer.from_pretrained(model_name)
-        print(f"CLIP processor loaded: {model_name}")
+        print(f"\tFROZEN CLIP processor loaded: {model_name}")
         clip_model = CLIPTextModel.from_pretrained(model_name)
         clip_model = clip_model.cuda()
-        print(f"CLIP model loaded: {model_name}")
+        print(f"\tFROZEN CLIP model loaded: {model_name}")
 
         # print("Using Global Object Names: ", GLOBAL_OBJECT_NAMES_PATH)
-        print("Using Random Template: ", USE_RANDOM_TEMPLATE)
-        print("Templates: ", TEMPLATES)
-        print("Using Bool Global Object Names: ", BOOL_GLOBAL_OBJECT_NAMES_PATH)
+        print("\tUsing Random Template: ", USE_RANDOM_TEMPLATE)
+        print("\tTemplates: ", TEMPLATES)
+        print("\tUsing Bool Global Object Names: ", BOOL_GLOBAL_OBJECT_NAMES_PATH)
         if os.path.exists(BOOL_GLOBAL_OBJECT_NAMES_PATH):
             with open(BOOL_GLOBAL_OBJECT_NAMES_PATH, 'r') as f:
                 object_vocab_data  = json.load(f)
@@ -371,7 +388,7 @@ class IPDN(nn.Module):
 
         filtered_sorted_items = sorted((name for name, value in object_vocab_data.items() if value))
         self.object_vocab = {name: idx for idx, name in enumerate(filtered_sorted_items)}
-        print(f"Loaded {len(self.object_vocab)} global object names from the file.")
+        print(f"\tLoaded {len(self.object_vocab)} global object names from the file.")
         self.len_object_vocab = len(self.object_vocab)
 
         # load each line in the file in  a list
@@ -394,7 +411,7 @@ class IPDN(nn.Module):
             object_names = list(object_names.keys())
             self.object_prompt_names[scene_id] = object_names
         
-        print(f"Loaded {len(self.object_prompt_names)} scene object names from the file.")
+        print(f"\tLoaded {len(self.object_prompt_names)} scene object names from the file.")
 
         prompts = []
         for object_name in self.object_vocab.keys():
@@ -413,10 +430,12 @@ class IPDN(nn.Module):
             clip_outputs = clip_model(**lang_tokens)
             sentence_feature = clip_outputs.pooler_output
             attention_mask = lang_tokens.data['attention_mask']
-
+        
+        print(f"\tComputed text features for {len(prompts)} object prompts.")
+        print(f"\tPRECOMPUTE FINISHED\n\n")
         return sentence_feature, attention_mask
 
-    def compute_global_scene_object_bce_loss(self, projected_visual_features, object_prompt_features, batch_object_names, scenes_len):
+    def compute_global_scene_object_bce_loss(self, query_features, object_prompt_features, batch_object_names, scenes_len):
         """
         Args:
             projected_visual_features: [B_utterances, n_queries, 64]
@@ -424,19 +443,20 @@ class IPDN(nn.Module):
             batch_object_names: List of lists of object names for each scene
             scenes_len: List indicating number of utterances per scene
         """
-        # 1. Project object features to match visual feature dimension
-        if not hasattr(self, 'object_contrastive_projection'):
-            # print("Creating object contrastive projection layer")
-            # exit()
-            # // TODO: fix here, this will not make the model learn a lot
-            self.object_contrastive_projection = nn.Linear(768, 64).to(projected_visual_features.device)
+        # # 1. Project object features to match visual feature dimension
+        # if not hasattr(self, 'object_contrastive_projection'):
+        #     # print("Creating object contrastive projection layer")
+        #     # exit()
+        #     # // TODO: fix here, this will not make the model learn a lot
+        #     self.object_contrastive_projection = nn.Linear(768, 64).to(projected_visual_features.device)
         
-        projected_object_features = self.object_contrastive_projection(object_prompt_features)  # [641, 64]
-        text_features = F.normalize(projected_object_features, dim=-1)
+        projected_object_features = self.prompts_object_projection(object_prompt_features)  # [n_objects, 256]
+        text_features = F.normalize(projected_object_features, dim=-1, eps=1e-8)
         
         # 2. Select representative visual features for each utterance (using mean pooling)
-        selected_visual_features = projected_visual_features.mean(dim=1)  # [B_utterances, 64]
-        visual_features = F.normalize(selected_visual_features, dim=-1)
+        selected_visual_features = query_features.mean(dim=1)  # [B_utterances, 256]
+        projected_visual_features = self.visual_scene_obj_projection(selected_visual_features)
+        visual_features = F.normalize(projected_visual_features, dim=-1, eps=1e-8)
         
         # 3. Create mapping from utterance to scene using scenes_len
         B_utterances = visual_features.shape[0]
@@ -463,5 +483,9 @@ class IPDN(nn.Module):
         
         weight = torch.ones_like(labels)
         weight[labels == 1] = WEIGHT
-        
+
+        # print(f"\nDEBUG: Query features: min={query_features.min():.4f}, max={query_features.max():.4f}")
+        # print(f"DEBUG: Visual proj: min={projected_visual_features.min():.4f}, max={projected_visual_features.max():.4f}")
+        # print(f"DEBUG: Text proj: min={projected_object_features.min():.4f}, max={projected_object_features.max():.4f}")
+        # print("")     
         return F.binary_cross_entropy_with_logits(logits, labels, weight=weight)

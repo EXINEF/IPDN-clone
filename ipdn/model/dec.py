@@ -547,6 +547,7 @@ class DEC(nn.Module):
             'indis': pred_indis, # [B, B_q, 2]
             'proj_queries': proj_queries[-1],
             'proj_tokens': proj_tokens[-1],
+            'query_features': proj_tokens[-1], # [B, B_q, d_model]
             'sample_inds': sample_inds, # [B, K]
             'ref_scores': ref_scores, # [B, M]
             'aux_outputs': [{
