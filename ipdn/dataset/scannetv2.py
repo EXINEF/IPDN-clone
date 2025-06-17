@@ -16,7 +16,7 @@ from scipy import sparse as sp
 import sng_parser
 from torch_scatter import scatter_max, scatter_mean
 from transformers import RobertaTokenizerFast, CLIPTokenizerFast
-from ipdn.dataset.mine_configs import TEXT_ENCODER, CLIP_MODEL
+from ipdn.dataset.mine_configs import TEXT_ENCODER
 
 MAX_NUM_OBJ = 132
 
@@ -107,13 +107,13 @@ class ScanNetDataset_sample_graph_edge(Dataset):
         self.nyu40id2class = self._get_nyu40id2class()
         self.sem2nyu = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
 
-        if TEXT_ENCODER == 'ROBERTA':
-            self.tokenizer = RobertaTokenizerFast.from_pretrained('roberta-base')
-            print('Using RobertaTokenizerFast for text encoding: ', 'roberta-base')
+        if TEXT_ENCODER == 'roberta-base':
+            self.tokenizer = RobertaTokenizerFast.from_pretrained(TEXT_ENCODER)
+            print('Using RobertaTokenizerFast for text encoding: ', TEXT_ENCODER)
         
-        elif TEXT_ENCODER == 'CLIP':
-            self.tokenizer = CLIPTokenizerFast.from_pretrained(CLIP_MODEL)
-            print('Using CLIPTokenizerFast for text encoding: ', CLIP_MODEL)
+        elif TEXT_ENCODER == 'openai/clip-vit-large-patch14':
+            self.tokenizer = CLIPTokenizerFast.from_pretrained(TEXT_ENCODER)
+            print('Using CLIPTokenizerFast for text encoding: ', TEXT_ENCODER)
         else:
             raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
 
@@ -485,11 +485,11 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             lang_utterances.extend(lang_utterance)
             dense_mapss.extend(dense_maps)
 
-        if TEXT_ENCODER == 'ROBERTA':
+        if TEXT_ENCODER == 'roberta-base':
             token_dict = self.tokenizer.batch_encode_plus(
                 lang_utterances, padding="longest", return_tensors="pt"
             )
-        elif TEXT_ENCODER == 'CLIP':
+        elif TEXT_ENCODER == 'openai/clip-vit-large-patch14':
             token_dict = self.tokenizer(text=lang_utterances, return_tensors="pt", padding=True, truncation=True, max_length=77)
         else:
             raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')
@@ -591,16 +591,16 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             rel_char_span[r] = rel
             num_r = r+1
 
-        tokenized = self.tokenizer.batch_encode_plus(
-            [' '.join(anno['utterance'].replace(',', ' ,').split())],
-            padding="longest", return_tensors="pt"
-        )
-        if TEXT_ENCODER == 'ROBERTA':
+        # tokenized = self.tokenizer.batch_encode_plus(
+        #     [' '.join(anno['utterance'].replace(',', ' ,').split())],
+        #     padding="longest", return_tensors="pt"
+        # )
+        if TEXT_ENCODER == 'roberta-base':
             tokenized = self.tokenizer.batch_encode_plus(
                 [' '.join(anno['utterance'].replace(',', ' ,').split())],
                 padding="longest", return_tensors="pt"
             )
-        elif TEXT_ENCODER == 'CLIP':
+        elif TEXT_ENCODER == 'openai/clip-vit-large-patch14':
             tokenized = self.tokenizer(text=[' '.join(anno['utterance'].replace(',', ' ,').split())], return_tensors="pt", padding=True, truncation=True, max_length=77)
         else:
             raise NotImplementedError(f'Text encoder {TEXT_ENCODER} not supported')

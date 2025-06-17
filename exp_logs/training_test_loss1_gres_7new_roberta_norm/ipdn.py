@@ -19,7 +19,7 @@ import os
 import json
 from transformers import CLIPTokenizer, CLIPTextModel
 import random
-from ipdn.dataset.mine_configs import TEXT_ENCODER, CLIP_MODEL
+from ipdn.dataset.mine_configs import TEXT_ENCODER
 
 LOSS_SCENE_OBJ_WEIGHT = 1
 print(f"LOSS_SCENE_OBJ_WEIGHT: {LOSS_SCENE_OBJ_WEIGHT}")

@@ -19,13 +19,13 @@ import os
 import json
 from transformers import CLIPTokenizer, CLIPTextModel
 import random
-from ipdn.dataset.mine_configs import TEXT_ENCODER, CLIP_MODEL
+from ipdn.dataset.mine_configs import TEXT_ENCODER
 
-LOSS_SCENE_OBJ_WEIGHT = 1
-print(f"LOSS_SCENE_OBJ_WEIGHT: {LOSS_SCENE_OBJ_WEIGHT}")
+LOSS_SCENE_OBJ_WEIGHT = 1.5
+
 # print("USING SO_WEIGHT")
 WEIGHT = 20.0
-print(f"WEIGHT: {WEIGHT}")
+
 
 BOOL_GLOBAL_OBJECT_NAMES_PATH = "/nfs/data_todi/jli/Alessio_works/IPDN-clone/bool_claude_DMA_preprocess_global_object_names__20250507-101601_winsize20_minocc6.json"
 PREPROCESSED_FILTERED_OBJECT_IDS_PATH = "/nfs/data_todi/jli/Alessio_works/RAM-clone/output_preprocess_object_ids/neighbor-filtering__20250507-101601_winsize20_minocc6"
@@ -105,7 +105,7 @@ class IPDN(nn.Module):
         self.decoder_param = dec
         self.fps_num = fps_num
         
-        if TEXT_ENCODER == 'ROBERTA':
+        if TEXT_ENCODER == 'roberta-base':
             self.text_encoder = RobertaModel.from_pretrained('roberta-base')
             print('Using RobertaModel for text encoding: roberta-base')
         elif TEXT_ENCODER == 'CLIP':
@@ -366,7 +366,8 @@ class IPDN(nn.Module):
         Returns:
             Tensor of shape [num_classes, 768]
         """
-
+        print(f"LOSS_SCENE_OBJ_WEIGHT: {LOSS_SCENE_OBJ_WEIGHT}")
+        print(f"WEIGHT: {WEIGHT}")
         print("\n\nUsing Preprocessed Filtered Object IDs: ", PREPROCESSED_FILTERED_OBJECT_IDS_PATH)
 
         model_name = 'openai/clip-vit-large-patch14'
