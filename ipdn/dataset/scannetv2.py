@@ -355,10 +355,12 @@ class ScanNetDataset_sample_graph_edge(Dataset):
         meta_datas, view_dependents = [], []
         scene_input = self.scene_inputs[index]
         feat_2d = []
+        gt_objects_names = []
         
         for i in range(len(scene_input)):
             data = scene_input[i]
             scan_id = data['scene_id']
+            gt_objects_names.append(data['object_name'])
             
             if i==0:
                 for fn in self.sp_filenames:
@@ -446,7 +448,10 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             meta_datas.append(meta_data)
             view_dependents.append(view_dependent)
             dense_maps.append(dense_map)
-        return ann_ids, scan_id, coord, coord_float, feat, superpoint, object_idss, gt_pmasks, gt_spmasks, sp_ref_masks, lang_utterances, sp_ins_label, meta_datas, dense_maps, view_dependents, feat_2d
+
+        # remove duplicate objects from gt_objects_names
+        gt_objects_names = list(set(gt_objects_names))
+        return ann_ids, scan_id, coord, coord_float, feat, superpoint, object_idss, gt_pmasks, gt_spmasks, sp_ref_masks, lang_utterances, sp_ins_label, meta_datas, dense_maps, view_dependents, feat_2d, gt_objects_names
     
     def collate_fn(self, batch: Sequence[Sequence]) -> Dict:
         ann_ids, scan_ids, coords, coords_float, feats, superpoints, object_idss, gt_pmasks, gt_spmasks, sp_ref_masks, lang_tokenss, lang_masks, lang_utterances, sp_ins_labels, meta_datas, dense_mapss = [], [], [], [], [], [], [], [], [], [], [], [], [], [], [], []
@@ -455,8 +460,9 @@ class ScanNetDataset_sample_graph_edge(Dataset):
         superpoint_bias = 0
         view_dependents = []
         feats_2d = []
+        gt_objects_names = []
         for i, data in enumerate(batch):
-            ann_id, scan_id, coord, coord_float, feat, src_superpoint, object_ids, gt_pmask, gt_spmask, sp_ref_mask, lang_utterance, sp_ins_label, meta_data, dense_maps, view_dependent, feat_2d = data
+            ann_id, scan_id, coord, coord_float, feat, src_superpoint, object_ids, gt_pmask, gt_spmask, sp_ref_mask, lang_utterance, sp_ins_label, meta_data, dense_maps, view_dependent, feat_2d, gt_obj_names = data
             
             feats_2d.append(feat_2d)
             
@@ -484,6 +490,8 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             
             lang_utterances.extend(lang_utterance)
             dense_mapss.extend(dense_maps)
+
+            gt_objects_names.append(gt_obj_names)
 
         if TEXT_ENCODER == 'roberta-base':
             token_dict = self.tokenizer.batch_encode_plus(
@@ -534,6 +542,7 @@ class ScanNetDataset_sample_graph_edge(Dataset):
             'dense_maps': dense_mapss,
             'view_dependents':view_dependents,
             'feats_2d':feats_2d,
+            'gt_objects_names': gt_objects_names
         }
 
     #################################################

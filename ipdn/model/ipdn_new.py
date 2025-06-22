@@ -22,7 +22,7 @@ from pointnet2.pointnet2_utils import FurthestPointSampling
 
 from .asymmetric_loss import AsymmetricLossOptimized
 
-LOSS_SCENE_OBJ_WEIGHT = 1
+LOSS_SCENE_OBJ_WEIGHT = 20
 USE_ASYMMETRIC_LOSS = False
 GAMMA_NEG = 4
 GAMMA_POS = 0
@@ -64,18 +64,23 @@ FEATURE_DIM = 32          # input superpoint dim
 HIDDEN_DIM = 256          # internal projected dim
 CLIP_DIM = 768            # frozen CLIP embedding dim
 
+
 class SceneEncoder(nn.Module):
-    def __init__(self, object_vocab, feature_dim=FEATURE_DIM, hidden_dim=HIDDEN_DIM, clip_dim=CLIP_DIM):
+    def __init__(self, object_vocab, scene_features_dim, hidden_dim, text_encoder_features_dim):
         super().__init__()
         # MLP for projecting superpoint features
-        print("RELU NOT ACTIVATED")
+        print("RELU ACTIVATED")
+        print("FEATURE_DIM:", scene_features_dim)
+        print("HIDDEN_DIM:", hidden_dim)
+        print("CLIP_DIM:", text_encoder_features_dim)
+
         self.superpoint_proj = nn.Sequential(
-            nn.Linear(feature_dim, hidden_dim),      # 32 → 256
+            nn.Linear(scene_features_dim, hidden_dim),      # 32 → 256
             nn.LayerNorm(hidden_dim),
-            #nn.ReLU(),
+            nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(hidden_dim, clip_dim),         # 256 → 768
-            nn.LayerNorm(clip_dim),                  # Keep this
+            nn.Linear(hidden_dim, text_encoder_features_dim),         # 256 → 768
+            nn.LayerNorm(text_encoder_features_dim),                  # Keep this
         )
         # TODO: we can try to remove the relu
         # project from 32 to 256, then 256 to 768, sp_num x 32 -> sp_num x 768
@@ -91,7 +96,7 @@ class SceneEncoder(nn.Module):
 
     def forward(self, sp_feats_batch, batch_object_names, clip_matrix):
         """
-        sp_feats_batch: list of [num_sp_i, feature_dim] tensors, len = B
+        sp_feats_batch: list of [num_sp_i, scene_features_dim] tensors, len = B
         batch_object_names: list of list of object names present in each scene
         clip_text_embeddings: Dict[str, Tensor(768,)], frozen CLIP embeddings
         """
@@ -141,6 +146,18 @@ class SceneEncoder(nn.Module):
         labels_batch = torch.stack(labels_list)  # [B, num_objects]
 
         return logits_batch, labels_batch
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.25, gamma=2.0):
+        super().__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+    
+    def forward(self, inputs, targets):
+        bce_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduction='none')
+        pt = torch.exp(-bce_loss)
+        focal_loss = self.alpha * (1 - pt) ** self.gamma * bce_loss
+        return focal_loss.mean()
 
 class IPDN(nn.Module):
     def __init__(
@@ -201,9 +218,9 @@ class IPDN(nn.Module):
         
         self.scene_encoder = SceneEncoder(
             object_vocab=self.object_vocab,
-            feature_dim=FEATURE_DIM,
+            scene_features_dim=FEATURE_DIM,
             hidden_dim=HIDDEN_DIM,
-            clip_dim=CLIP_DIM
+            text_encoder_features_dim=CLIP_DIM
         )
         # criterion
         self.criterion = Criterion(**criterion)
@@ -215,21 +232,9 @@ class IPDN(nn.Module):
                 clip=CLIP
             )
         else:
-            self.scene_encoder_criterion = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.cuda())
-
-        # # Test with same inputs
-        # logits_test = torch.randn(2, 10, requires_grad=True)  # Example shapes
-        # targets_test = torch.randint(0, 2, (2, 10)).float()
-
-        # # Compare BCE and ASL
-        # bce_loss = F.binary_cross_entropy_with_logits(logits_test, targets_test)
-        # asl_loss = self.scene_encoder_criterion(logits_test, targets_test)
-
-        # print(f"logits values: {logits_test}")
-        # print(f"targets values: {targets_test}")
-        # print(f"BCE loss: {bce_loss.item():.4f}")
-        # print(f"ASL loss: {asl_loss.item():.4f}")
-        # exit()
+            print(f"Usinf, FOCAL LOSS with alpha=0.25, gamma=2.0")
+            self.scene_encoder_criterion = FocalLoss(alpha=0.25, gamma=2.0)
+            # self.scene_encoder_criterion = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.cuda())
 
         self.test_cfg = test_cfg
         self.norm_eval = norm_eval
