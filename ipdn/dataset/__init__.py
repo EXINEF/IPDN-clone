@@ -2,6 +2,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
 from .scannetv2 import ScanNetDataset_sample_graph_edge
+from .scannetv2_gt_longclip import ScanNetDataset_sample_graph_edge as ScanNetDataset_sample_graph_edge_longclip
 
 
 __all__ = ['ScanNetDataset_sample_graph_edge', 'build_dataset', 'build_dataloader']
@@ -14,6 +15,16 @@ def build_dataset(data_cfg, logger):
     data_type = _data_cfg.pop('type')
     if data_type == 'scannetv2_sample_graph_edge':
         return ScanNetDataset_sample_graph_edge(**_data_cfg)
+    else:
+        raise ValueError(f'Unknown {data_type}')
+    
+def build_dataset_longclip(data_cfg, logger):
+    assert 'type' in data_cfg
+    _data_cfg = data_cfg.copy()
+    _data_cfg['logger'] = logger
+    data_type = _data_cfg.pop('type')
+    if data_type == 'scannetv2_sample_graph_edge':
+        return ScanNetDataset_sample_graph_edge_longclip(**_data_cfg)
     else:
         raise ValueError(f'Unknown {data_type}')
 

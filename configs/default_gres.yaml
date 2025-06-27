@@ -123,6 +123,8 @@ optimizer:
      lr_mult: 0.01
    output_layer:
      lr_mult: 0.01
+  #  scene_encoder:  # ADD THIS!
+  #    lr_mult: 0.01  # 5x base LR = 0.0005
    dec:
      lr_mult: 1.0
 

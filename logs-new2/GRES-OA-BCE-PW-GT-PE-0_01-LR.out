@@ -1,0 +1,1541 @@
+Tue Jun 24 12:08:00 2025       
++---------------------------------------------------------------------------------------+
+| NVIDIA-SMI 535.161.07             Driver Version: 535.161.07   CUDA Version: 12.2     |
+|-----------------------------------------+----------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |         Memory-Usage | GPU-Util  Compute M. |
+|                                         |                      |               MIG M. |
+|=========================================+======================+======================|
+|   0  NVIDIA RTX A6000               On  | 00000000:61:00.0 Off |                  Off |
+| 31%   50C    P8              19W / 300W |      1MiB / 49140MiB |      0%      Default |
+|                                         |                      |                  N/A |
++-----------------------------------------+----------------------+----------------------+
+                                                                                         
++---------------------------------------------------------------------------------------+
+| Processes:                                                                            |
+|  GPU   GI   CI        PID   Type   Process name                            GPU Memory |
+|        ID   ID                                                             Usage      |
+|=======================================================================================|
+|  No running processes found                                                           |
++---------------------------------------------------------------------------------------+
+USE_ASYMMETRIC_LOSS: False
+USING POS_WEIGHT: True
+set CUDA_VISIBLE_DEVICES as 0
+RELU ACTIVATED
+Model NEW: IPDN(
+  (input_conv): SparseSequential(
+    (0): SubMConv3d(6, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+  )
+  (unet): UBlock(
+    (blocks): SparseSequential(
+      (block0): ResidualBlock(
+        (i_branch): SparseSequential(
+          (0): Identity()
+        )
+        (conv_branch): SparseSequential(
+          (0): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): SubMConv3d(32, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          (3): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (4): ReLU()
+          (5): SubMConv3d(32, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+        )
+      )
+      (block1): ResidualBlock(
+        (i_branch): SparseSequential(
+          (0): Identity()
+        )
+        (conv_branch): SparseSequential(
+          (0): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): SubMConv3d(32, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          (3): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (4): ReLU()
+          (5): SubMConv3d(32, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+        )
+      )
+    )
+    (conv): SparseSequential(
+      (0): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+      (1): ReLU()
+      (2): SparseConv3d(32, 64, kernel_size=[2, 2, 2], stride=[2, 2, 2], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+    )
+    (u): UBlock(
+      (blocks): SparseSequential(
+        (block0): ResidualBlock(
+          (i_branch): SparseSequential(
+            (0): Identity()
+          )
+          (conv_branch): SparseSequential(
+            (0): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (1): ReLU()
+            (2): SubMConv3d(64, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            (3): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (4): ReLU()
+            (5): SubMConv3d(64, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          )
+        )
+        (block1): ResidualBlock(
+          (i_branch): SparseSequential(
+            (0): Identity()
+          )
+          (conv_branch): SparseSequential(
+            (0): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (1): ReLU()
+            (2): SubMConv3d(64, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            (3): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (4): ReLU()
+            (5): SubMConv3d(64, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          )
+        )
+      )
+      (conv): SparseSequential(
+        (0): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+        (1): ReLU()
+        (2): SparseConv3d(64, 96, kernel_size=[2, 2, 2], stride=[2, 2, 2], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+      )
+      (u): UBlock(
+        (blocks): SparseSequential(
+          (block0): ResidualBlock(
+            (i_branch): SparseSequential(
+              (0): Identity()
+            )
+            (conv_branch): SparseSequential(
+              (0): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (1): ReLU()
+              (2): SubMConv3d(96, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              (3): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (4): ReLU()
+              (5): SubMConv3d(96, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            )
+          )
+          (block1): ResidualBlock(
+            (i_branch): SparseSequential(
+              (0): Identity()
+            )
+            (conv_branch): SparseSequential(
+              (0): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (1): ReLU()
+              (2): SubMConv3d(96, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              (3): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (4): ReLU()
+              (5): SubMConv3d(96, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            )
+          )
+        )
+        (conv): SparseSequential(
+          (0): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): SparseConv3d(96, 128, kernel_size=[2, 2, 2], stride=[2, 2, 2], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+        )
+        (u): UBlock(
+          (blocks): SparseSequential(
+            (block0): ResidualBlock(
+              (i_branch): SparseSequential(
+                (0): Identity()
+              )
+              (conv_branch): SparseSequential(
+                (0): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (1): ReLU()
+                (2): SubMConv3d(128, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                (3): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (4): ReLU()
+                (5): SubMConv3d(128, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              )
+            )
+            (block1): ResidualBlock(
+              (i_branch): SparseSequential(
+                (0): Identity()
+              )
+              (conv_branch): SparseSequential(
+                (0): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (1): ReLU()
+                (2): SubMConv3d(128, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                (3): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (4): ReLU()
+                (5): SubMConv3d(128, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              )
+            )
+          )
+          (conv): SparseSequential(
+            (0): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (1): ReLU()
+            (2): SparseConv3d(128, 160, kernel_size=[2, 2, 2], stride=[2, 2, 2], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          )
+          (u): UBlock(
+            (blocks): SparseSequential(
+              (block0): ResidualBlock(
+                (i_branch): SparseSequential(
+                  (0): Identity()
+                )
+                (conv_branch): SparseSequential(
+                  (0): BatchNorm1d(160, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                  (1): ReLU()
+                  (2): SubMConv3d(160, 160, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                  (3): BatchNorm1d(160, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                  (4): ReLU()
+                  (5): SubMConv3d(160, 160, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                )
+              )
+              (block1): ResidualBlock(
+                (i_branch): SparseSequential(
+                  (0): Identity()
+                )
+                (conv_branch): SparseSequential(
+                  (0): BatchNorm1d(160, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                  (1): ReLU()
+                  (2): SubMConv3d(160, 160, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                  (3): BatchNorm1d(160, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                  (4): ReLU()
+                  (5): SubMConv3d(160, 160, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                )
+              )
+            )
+          )
+          (deconv): SparseSequential(
+            (0): BatchNorm1d(160, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (1): ReLU()
+            (2): SparseInverseConv3d(160, 128, kernel_size=[2, 2, 2], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          )
+          (blocks_tail): SparseSequential(
+            (block0): ResidualBlock(
+              (i_branch): SparseSequential(
+                (0): SubMConv3d(256, 128, kernel_size=[1, 1, 1], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              )
+              (conv_branch): SparseSequential(
+                (0): BatchNorm1d(256, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (1): ReLU()
+                (2): SubMConv3d(256, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                (3): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (4): ReLU()
+                (5): SubMConv3d(128, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              )
+            )
+            (block1): ResidualBlock(
+              (i_branch): SparseSequential(
+                (0): Identity()
+              )
+              (conv_branch): SparseSequential(
+                (0): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (1): ReLU()
+                (2): SubMConv3d(128, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+                (3): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+                (4): ReLU()
+                (5): SubMConv3d(128, 128, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              )
+            )
+          )
+        )
+        (deconv): SparseSequential(
+          (0): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): SparseInverseConv3d(128, 96, kernel_size=[2, 2, 2], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+        )
+        (blocks_tail): SparseSequential(
+          (block0): ResidualBlock(
+            (i_branch): SparseSequential(
+              (0): SubMConv3d(192, 96, kernel_size=[1, 1, 1], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            )
+            (conv_branch): SparseSequential(
+              (0): BatchNorm1d(192, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (1): ReLU()
+              (2): SubMConv3d(192, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              (3): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (4): ReLU()
+              (5): SubMConv3d(96, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            )
+          )
+          (block1): ResidualBlock(
+            (i_branch): SparseSequential(
+              (0): Identity()
+            )
+            (conv_branch): SparseSequential(
+              (0): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (1): ReLU()
+              (2): SubMConv3d(96, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+              (3): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+              (4): ReLU()
+              (5): SubMConv3d(96, 96, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            )
+          )
+        )
+      )
+      (deconv): SparseSequential(
+        (0): BatchNorm1d(96, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+        (1): ReLU()
+        (2): SparseInverseConv3d(96, 64, kernel_size=[2, 2, 2], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+      )
+      (blocks_tail): SparseSequential(
+        (block0): ResidualBlock(
+          (i_branch): SparseSequential(
+            (0): SubMConv3d(128, 64, kernel_size=[1, 1, 1], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          )
+          (conv_branch): SparseSequential(
+            (0): BatchNorm1d(128, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (1): ReLU()
+            (2): SubMConv3d(128, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            (3): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (4): ReLU()
+            (5): SubMConv3d(64, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          )
+        )
+        (block1): ResidualBlock(
+          (i_branch): SparseSequential(
+            (0): Identity()
+          )
+          (conv_branch): SparseSequential(
+            (0): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (1): ReLU()
+            (2): SubMConv3d(64, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+            (3): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+            (4): ReLU()
+            (5): SubMConv3d(64, 64, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          )
+        )
+      )
+    )
+    (deconv): SparseSequential(
+      (0): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+      (1): ReLU()
+      (2): SparseInverseConv3d(64, 32, kernel_size=[2, 2, 2], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+    )
+    (blocks_tail): SparseSequential(
+      (block0): ResidualBlock(
+        (i_branch): SparseSequential(
+          (0): SubMConv3d(64, 32, kernel_size=[1, 1, 1], stride=[1, 1, 1], padding=[0, 0, 0], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+        )
+        (conv_branch): SparseSequential(
+          (0): BatchNorm1d(64, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): SubMConv3d(64, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          (3): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (4): ReLU()
+          (5): SubMConv3d(32, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+        )
+      )
+      (block1): ResidualBlock(
+        (i_branch): SparseSequential(
+          (0): Identity()
+        )
+        (conv_branch): SparseSequential(
+          (0): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (1): ReLU()
+          (2): SubMConv3d(32, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+          (3): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+          (4): ReLU()
+          (5): SubMConv3d(32, 32, kernel_size=[3, 3, 3], stride=[1, 1, 1], padding=[1, 1, 1], dilation=[1, 1, 1], output_padding=[0, 0, 0], bias=False, algo=ConvAlgo.MaskImplicitGemm)
+        )
+      )
+    )
+  )
+  (output_layer): SparseSequential(
+    (0): BatchNorm1d(32, eps=0.0001, momentum=0.1, affine=True, track_running_stats=True)
+    (1): ReLU(inplace=True)
+  )
+  (text_encoder): RobertaModel(
+    (embeddings): RobertaEmbeddings(
+      (word_embeddings): Embedding(50265, 768, padding_idx=1)
+      (position_embeddings): Embedding(514, 768, padding_idx=1)
+      (token_type_embeddings): Embedding(1, 768)
+      (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (dropout): Dropout(p=0.1, inplace=False)
+    )
+    (encoder): RobertaEncoder(
+      (layer): ModuleList(
+        (0): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (1): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (2): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (3): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (4): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (5): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (6): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (7): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (8): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (9): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (10): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+        (11): RobertaLayer(
+          (attention): RobertaAttention(
+            (self): RobertaSelfAttention(
+              (query): Linear(in_features=768, out_features=768, bias=True)
+              (key): Linear(in_features=768, out_features=768, bias=True)
+              (value): Linear(in_features=768, out_features=768, bias=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+            (output): RobertaSelfOutput(
+              (dense): Linear(in_features=768, out_features=768, bias=True)
+              (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+              (dropout): Dropout(p=0.1, inplace=False)
+            )
+          )
+          (intermediate): RobertaIntermediate(
+            (dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_act_fn): GELUActivation()
+          )
+          (output): RobertaOutput(
+            (dense): Linear(in_features=3072, out_features=768, bias=True)
+            (LayerNorm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+            (dropout): Dropout(p=0.1, inplace=False)
+          )
+        )
+      )
+    )
+    (pooler): RobertaPooler(
+      (dense): Linear(in_features=768, out_features=768, bias=True)
+      (activation): Tanh()
+    )
+  )
+  (dec): DEC(
+    (input_proj): Sequential(
+      (0): Linear(in_features=32, out_features=256, bias=True)
+      (1): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      (2): ReLU()
+    )
+    (input_proj_2d): Sequential(
+      (0): Linear(in_features=1024, out_features=512, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=512, out_features=256, bias=True)
+      (3): ReLU()
+      (4): Linear(in_features=256, out_features=256, bias=True)
+    )
+    (sum_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+    (lang_proj): Linear(in_features=768, out_features=256, bias=True)
+    (lang_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+    (sampling_module): SamplingModule(
+      (camap): CrossAttentionMap(
+        (query_proj): Linear(in_features=256, out_features=256, bias=False)
+        (key_proj): Linear(in_features=256, out_features=256, bias=False)
+      )
+    )
+    (query_generator): Sequential(
+      (0): Linear(in_features=256, out_features=256, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+      (3): ReLU()
+      (4): Linear(in_features=256, out_features=256, bias=True)
+    )
+    (swa_layers): ModuleList(
+      (0): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (1): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (2): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (3): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (4): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (5): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (rra_layers): ModuleList(
+      (0): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (1): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (2): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (3): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (4): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (5): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (rla_layers): ModuleList(
+      (0): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (1): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (2): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (3): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (4): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (5): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (swa_ffn_layers): ModuleList(
+      (0): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (1): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (2): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (3): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (4): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (5): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (sem_cls_heads): ModuleList(
+      (0): ThreeLayerMLP(
+        (net): Sequential(
+          (0): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (1): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Dropout(p=0.3, inplace=False)
+          (4): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (5): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (6): ReLU()
+          (7): Dropout(p=0.3, inplace=False)
+          (8): Conv1d(256, 256, kernel_size=(1,), stride=(1,))
+        )
+      )
+      (1): ThreeLayerMLP(
+        (net): Sequential(
+          (0): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (1): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Dropout(p=0.3, inplace=False)
+          (4): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (5): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (6): ReLU()
+          (7): Dropout(p=0.3, inplace=False)
+          (8): Conv1d(256, 256, kernel_size=(1,), stride=(1,))
+        )
+      )
+      (2): ThreeLayerMLP(
+        (net): Sequential(
+          (0): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (1): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Dropout(p=0.3, inplace=False)
+          (4): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (5): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (6): ReLU()
+          (7): Dropout(p=0.3, inplace=False)
+          (8): Conv1d(256, 256, kernel_size=(1,), stride=(1,))
+        )
+      )
+      (3): ThreeLayerMLP(
+        (net): Sequential(
+          (0): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (1): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Dropout(p=0.3, inplace=False)
+          (4): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (5): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (6): ReLU()
+          (7): Dropout(p=0.3, inplace=False)
+          (8): Conv1d(256, 256, kernel_size=(1,), stride=(1,))
+        )
+      )
+      (4): ThreeLayerMLP(
+        (net): Sequential(
+          (0): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (1): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Dropout(p=0.3, inplace=False)
+          (4): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (5): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (6): ReLU()
+          (7): Dropout(p=0.3, inplace=False)
+          (8): Conv1d(256, 256, kernel_size=(1,), stride=(1,))
+        )
+      )
+      (5): ThreeLayerMLP(
+        (net): Sequential(
+          (0): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (1): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (2): ReLU()
+          (3): Dropout(p=0.3, inplace=False)
+          (4): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+          (5): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+          (6): ReLU()
+          (7): Dropout(p=0.3, inplace=False)
+          (8): Conv1d(256, 256, kernel_size=(1,), stride=(1,))
+        )
+      )
+    )
+    (scg): ModuleList(
+      (0): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (1): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (2): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (3): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (4): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (5): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (lqg): ModuleList(
+      (0): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (1): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (2): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (3): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (4): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (5): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (lla_layers): ModuleList(
+      (0): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (1): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (2): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (3): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (4): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (5): SelfAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (lsa_layers): ModuleList(
+      (0): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (1): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (2): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (3): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (4): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+      (5): CrossAttentionLayer(
+        (attn): MultiheadAttention(
+          (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (dropout): Dropout(p=0.0, inplace=False)
+      )
+    )
+    (lsa_ffn_layers): ModuleList(
+      (0): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (1): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (2): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (3): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (4): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+      (5): FFN(
+        (net): Sequential(
+          (0): Linear(in_features=256, out_features=1024, bias=True)
+          (1): GELU(approximate=none)
+          (2): Dropout(p=0.0, inplace=False)
+          (3): Linear(in_features=1024, out_features=256, bias=True)
+          (4): Dropout(p=0.0, inplace=False)
+        )
+        (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      )
+    )
+    (sem_cls_head): ThreeLayerMLP(
+      (net): Sequential(
+        (0): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+        (1): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (2): ReLU()
+        (3): Dropout(p=0.3, inplace=False)
+        (4): Conv1d(256, 256, kernel_size=(1,), stride=(1,), bias=False)
+        (5): BatchNorm1d(256, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+        (6): ReLU()
+        (7): Dropout(p=0.3, inplace=False)
+        (8): Conv1d(256, 256, kernel_size=(1,), stride=(1,))
+      )
+    )
+    (out_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+    (out_score): Sequential(
+      (0): Linear(in_features=256, out_features=256, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=256, out_features=1, bias=True)
+    )
+    (x_mask): Sequential(
+      (0): Linear(in_features=32, out_features=256, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+    )
+    (indi_embedding): Sequential(
+      (0): Linear(in_features=256, out_features=256, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=256, out_features=2, bias=True)
+      (3): Linear(in_features=2, out_features=2, bias=True)
+    )
+    (indi_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+    (contrastive_align_projection_vision): Sequential(
+      (0): Linear(in_features=256, out_features=256, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+      (3): ReLU()
+      (4): Linear(in_features=256, out_features=64, bias=True)
+    )
+    (contrastive_align_projection_text): Sequential(
+      (0): Linear(in_features=256, out_features=256, bias=True)
+      (1): ReLU()
+      (2): Linear(in_features=256, out_features=256, bias=True)
+      (3): ReLU()
+      (4): Linear(in_features=256, out_features=64, bias=True)
+    )
+    (scg_head): SelfAttentionLayer(
+      (attn): MultiheadAttention(
+        (out_proj): NonDynamicallyQuantizableLinear(in_features=256, out_features=256, bias=True)
+      )
+      (norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      (dropout): Dropout(p=0, inplace=False)
+      (glu_p): Linear(in_features=256, out_features=256, bias=True)
+      (glu_g): Linear(in_features=256, out_features=256, bias=True)
+    )
+  )
+  (scene_encoder): SceneEncoder(
+    (superpoint_proj): Sequential(
+      (0): Linear(in_features=32, out_features=256, bias=True)
+      (1): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+      (2): ReLU()
+      (3): Dropout(p=0.1, inplace=False)
+      (4): Linear(in_features=256, out_features=768, bias=True)
+      (5): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+    )
+  )
+  (criterion): Criterion()
+  (scene_encoder_criterion): BCEWithLogitsLoss()
+)
+Found 1201 scene graph files in train split.
+Folder:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/
+Scene graphs path:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/multi3drefer/scene_graphs_train.json
+Using RobertaTokenizerFast for text encoding:  roberta-base
+Found 312 scene graph files in val split.
+Folder:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/
+Scene graphs path:  /nfs/data_todi/jli/Alessio_works/data_multi3dreder/multi3drefer/scene_graphs_val.json
+Using RobertaTokenizerFast for text encoding:  roberta-base
+NEW LOSS_SCENE_OBJ_WEIGHT: 1
+	FROZEN CLIP processor loaded: openai/clip-vit-large-patch14
+	FROZEN CLIP model loaded: openai/clip-vit-large-patch14
+Len of global_object_names_scene_inputs: 265
+Using Prompted Ensemble for CLIP Text Features
+Prompts:  ['There is a {} in the scene', 'A scene with {}', 'A scene containing {}', 'A room with {}', 'A room containing {}', 'There is {} in the scene', 'There is {} in the room', '{} is present in the scene', '{} is present in the room', 'In the scene there is a {}', 'In the room there is a {}', 'The scene contains {}', 'The room contains {}', 'A photo of a {} in a room', 'A 3D scan of a room with {}', 'Indoor scene with {}', 'This room has a {}', 'You can see a {} here', 'A {} can be found in this room', "Look, there's a {} in the scene"]
+	Computed prompted ensambled text features for 265 ScanNet object classes.
+	PRECOMPUTE FINISHED
+
+
+USING_POSWEIGHT
+
+[POS_WEIGHT STATS]
+  Shape       : torch.Size([265])
+  Mean        : 232.5371
+  Min         : 0.1412
+  Max         : 701.9993
+  Non-zero    : 265 / 265
+
+[POS_WEIGHT OBJECT MAPPING]
+  air hockey table     : 701.9993 (Pos: 1.0, Neg: 702.0)
+  armchair             : 4.4922 (Pos: 128.0, Neg: 575.0)
+  backpack             : 15.7381 (Pos: 42.0, Neg: 661.0)
+  bag                  : 45.8667 (Pos: 15.0, Neg: 688.0)
+  ball                 : 86.8750 (Pos: 8.0, Neg: 695.0)
+  basket               : 32.4762 (Pos: 21.0, Neg: 682.0)
+  bathrobe             : 350.4998 (Pos: 2.0, Neg: 701.0)
+  bathroom cabinet     : 25.0370 (Pos: 27.0, Neg: 676.0)
+  bathroom counter     : 53.0769 (Pos: 13.0, Neg: 690.0)
+  bathroom stall door  : 21.6774 (Pos: 31.0, Neg: 672.0)
+  bathroom vanity      : 7.3690 (Pos: 84.0, Neg: 619.0)
+  bathtub              : 7.3690 (Pos: 84.0, Neg: 619.0)
+  battery disposal jar : 350.4998 (Pos: 2.0, Neg: 701.0)
+  bed                  : 2.8000 (Pos: 185.0, Neg: 518.0)
+  bench                : 16.1463 (Pos: 41.0, Neg: 662.0)
+  bicycle              : 233.3333 (Pos: 3.0, Neg: 700.0)
+  bin                  : 38.0555 (Pos: 18.0, Neg: 685.0)
+  blackboard           : 701.9993 (Pos: 1.0, Neg: 702.0)
+  blanket              : 57.5833 (Pos: 12.0, Neg: 691.0)
+  blinds               : 350.4998 (Pos: 2.0, Neg: 701.0)
+  block                : 233.3333 (Pos: 3.0, Neg: 700.0)
+  board                : 99.4286 (Pos: 7.0, Neg: 696.0)
+  boat                 : 701.9993 (Pos: 1.0, Neg: 702.0)
+  boiler               : 174.7500 (Pos: 4.0, Neg: 699.0)
+  book rack            : 701.9993 (Pos: 1.0, Neg: 702.0)
+  bookshelf            : 3.5649 (Pos: 154.0, Neg: 549.0)
+  bookshelves          : 86.8750 (Pos: 8.0, Neg: 695.0)
+  bottle               : 701.9993 (Pos: 1.0, Neg: 702.0)
+  box                  : 174.7500 (Pos: 4.0, Neg: 699.0)
+  breakfast bar        : 86.8750 (Pos: 8.0, Neg: 695.0)
+  briefcase            : 350.4998 (Pos: 2.0, Neg: 701.0)
+  bucket               : 32.4762 (Pos: 21.0, Neg: 682.0)
+  bulletin board       : 350.4998 (Pos: 2.0, Neg: 701.0)
+  bunk bed             : 233.3333 (Pos: 3.0, Neg: 700.0)
+  cabinet              : 1.1765 (Pos: 323.0, Neg: 380.0)
+  cabinet door         : 701.9993 (Pos: 1.0, Neg: 702.0)
+  cabinets             : 12.2642 (Pos: 53.0, Neg: 650.0)
+  calendar             : 139.6000 (Pos: 5.0, Neg: 698.0)
+  can                  : 701.9993 (Pos: 1.0, Neg: 702.0)
+  car                  : 701.9993 (Pos: 1.0, Neg: 702.0)
+  cardboard            : 233.3333 (Pos: 3.0, Neg: 700.0)
+  carpet               : 350.4998 (Pos: 2.0, Neg: 701.0)
+  carseat              : 233.3333 (Pos: 3.0, Neg: 700.0)
+  cart                 : 27.1200 (Pos: 25.0, Neg: 678.0)
+  case                 : 77.1111 (Pos: 9.0, Neg: 694.0)
+  chair                : 0.1412 (Pos: 616.0, Neg: 87.0)
+  chest                : 233.3333 (Pos: 3.0, Neg: 700.0)
+  clock                : 701.9993 (Pos: 1.0, Neg: 702.0)
+  closet               : 49.2143 (Pos: 14.0, Neg: 689.0)
+  closet door          : 34.1500 (Pos: 20.0, Neg: 683.0)
+  closet doors         : 86.8750 (Pos: 8.0, Neg: 695.0)
+  clothes dryer        : 49.2143 (Pos: 14.0, Neg: 689.0)
+  clothes dryers       : 116.1666 (Pos: 6.0, Neg: 697.0)
+  clothing             : 350.4998 (Pos: 2.0, Neg: 701.0)
+  clothing rack        : 350.4998 (Pos: 2.0, Neg: 701.0)
+  coffee box           : 139.6000 (Pos: 5.0, Neg: 698.0)
+  coffee maker         : 49.2143 (Pos: 14.0, Neg: 689.0)
+  coffee table         : 3.7500 (Pos: 148.0, Neg: 555.0)
+  compost bin          : 174.7500 (Pos: 4.0, Neg: 699.0)
+  computer tower       : 9.0429 (Pos: 70.0, Neg: 633.0)
+  container            : 49.2143 (Pos: 14.0, Neg: 689.0)
+  copier               : 12.7843 (Pos: 51.0, Neg: 652.0)
+  couch                : 2.0699 (Pos: 229.0, Neg: 474.0)
+  couch cushions       : 174.7500 (Pos: 4.0, Neg: 699.0)
+  counter              : 9.9844 (Pos: 64.0, Neg: 639.0)
+  crate                : 233.3333 (Pos: 3.0, Neg: 700.0)
+  crib                 : 233.3333 (Pos: 3.0, Neg: 700.0)
+  cup                  : 350.4998 (Pos: 2.0, Neg: 701.0)
+  curtain              : 3.3395 (Pos: 162.0, Neg: 541.0)
+  cushion              : 139.6000 (Pos: 5.0, Neg: 698.0)
+  decoration           : 116.1666 (Pos: 6.0, Neg: 697.0)
+  desk                 : 1.7143 (Pos: 259.0, Neg: 444.0)
+  diaper bin           : 701.9993 (Pos: 1.0, Neg: 702.0)
+  dining table         : 49.2143 (Pos: 14.0, Neg: 689.0)
+  dish rack            : 701.9993 (Pos: 1.0, Neg: 702.0)
+  dishwasher           : 40.3529 (Pos: 17.0, Neg: 686.0)
+  dishwashing soap bottle : 701.9993 (Pos: 1.0, Neg: 702.0)
+  dispenser            : 233.3333 (Pos: 3.0, Neg: 700.0)
+  divider              : 701.9993 (Pos: 1.0, Neg: 702.0)
+  dolly                : 350.4998 (Pos: 2.0, Neg: 701.0)
+  door                 : 0.4926 (Pos: 471.0, Neg: 232.0)
+  doors                : 139.6000 (Pos: 5.0, Neg: 698.0)
+  drawer               : 99.4286 (Pos: 7.0, Neg: 696.0)
+  dresser              : 5.3909 (Pos: 110.0, Neg: 593.0)
+  drying rack          : 233.3333 (Pos: 3.0, Neg: 700.0)
+  easel                : 701.9993 (Pos: 1.0, Neg: 702.0)
+  electric panel       : 701.9993 (Pos: 1.0, Neg: 702.0)
+  elliptical machine   : 701.9993 (Pos: 1.0, Neg: 702.0)
+  end table            : 9.0429 (Pos: 70.0, Neg: 633.0)
+  exercise machine     : 233.3333 (Pos: 3.0, Neg: 700.0)
+  fan                  : 27.1200 (Pos: 25.0, Neg: 678.0)
+  faucet               : 174.7500 (Pos: 4.0, Neg: 699.0)
+  file cabinet         : 7.4699 (Pos: 83.0, Neg: 620.0)
+  fire extinguisher    : 174.7500 (Pos: 4.0, Neg: 699.0)
+  flag                 : 701.9993 (Pos: 1.0, Neg: 702.0)
+  flower stand         : 350.4998 (Pos: 2.0, Neg: 701.0)
+  flowerpot            : 139.6000 (Pos: 5.0, Neg: 698.0)
+  folded chair         : 99.4286 (Pos: 7.0, Neg: 696.0)
+  folded ladder        : 701.9993 (Pos: 1.0, Neg: 702.0)
+  folded table         : 233.3333 (Pos: 3.0, Neg: 700.0)
+  food display         : 174.7500 (Pos: 4.0, Neg: 699.0)
+  foosball table       : 99.4286 (Pos: 7.0, Neg: 696.0)
+  footrest             : 53.0769 (Pos: 13.0, Neg: 690.0)
+  footstool            : 233.3333 (Pos: 3.0, Neg: 700.0)
+  furnace              : 701.9993 (Pos: 1.0, Neg: 702.0)
+  furniture            : 86.8750 (Pos: 8.0, Neg: 695.0)
+  fuse box             : 350.4998 (Pos: 2.0, Neg: 701.0)
+  futon                : 701.9993 (Pos: 1.0, Neg: 702.0)
+  golf bag             : 350.4998 (Pos: 2.0, Neg: 701.0)
+  guitar               : 57.5833 (Pos: 12.0, Neg: 691.0)
+  guitar case          : 233.3333 (Pos: 3.0, Neg: 700.0)
+  hamper               : 62.9091 (Pos: 11.0, Neg: 692.0)
+  hand dryer           : 233.3333 (Pos: 3.0, Neg: 700.0)
+  hand towel           : 350.4998 (Pos: 2.0, Neg: 701.0)
+  hanging              : 174.7500 (Pos: 4.0, Neg: 699.0)
+  hat                  : 233.3333 (Pos: 3.0, Neg: 700.0)
+  heater               : 350.4998 (Pos: 2.0, Neg: 701.0)
+  instrument case      : 174.7500 (Pos: 4.0, Neg: 699.0)
+  ironing board        : 701.9993 (Pos: 1.0, Neg: 702.0)
+  jacket               : 233.3333 (Pos: 3.0, Neg: 700.0)
+  jar                  : 350.4998 (Pos: 2.0, Neg: 701.0)
+  keyboard             : 7.3690 (Pos: 84.0, Neg: 619.0)
+  keyboard piano       : 99.4286 (Pos: 7.0, Neg: 696.0)
+  kitchen cabinet      : 5.5701 (Pos: 107.0, Neg: 596.0)
+  kitchen cabinets     : 4.3664 (Pos: 131.0, Neg: 572.0)
+  kitchen counter      : 8.0128 (Pos: 78.0, Neg: 625.0)
+  kitchen island       : 99.4286 (Pos: 7.0, Neg: 696.0)
+  ladder               : 86.8750 (Pos: 8.0, Neg: 695.0)
+  lamp                 : 3.6250 (Pos: 152.0, Neg: 551.0)
+  laptop               : 14.9773 (Pos: 44.0, Neg: 659.0)
+  laundry basket       : 29.5652 (Pos: 23.0, Neg: 680.0)
+  laundry detergent    : 174.7500 (Pos: 4.0, Neg: 699.0)
+  laundry hamper       : 22.4333 (Pos: 30.0, Neg: 673.0)
+  light                : 174.7500 (Pos: 4.0, Neg: 699.0)
+  loft bed             : 139.6000 (Pos: 5.0, Neg: 698.0)
+  machine              : 116.1666 (Pos: 6.0, Neg: 697.0)
+  massage chair        : 350.4998 (Pos: 2.0, Neg: 701.0)
+  mat                  : 701.9993 (Pos: 1.0, Neg: 702.0)
+  mattress             : 233.3333 (Pos: 3.0, Neg: 700.0)
+  messenger bag        : 350.4998 (Pos: 2.0, Neg: 701.0)
+  microwave            : 6.3229 (Pos: 96.0, Neg: 607.0)
+  mini fridge          : 17.0256 (Pos: 39.0, Neg: 664.0)
+  mirror               : 25.0370 (Pos: 27.0, Neg: 676.0)
+  monitor              : 2.3636 (Pos: 209.0, Neg: 494.0)
+  mouse                : 174.7500 (Pos: 4.0, Neg: 699.0)
+  music stand          : 139.6000 (Pos: 5.0, Neg: 698.0)
+  night lamp           : 701.9993 (Pos: 1.0, Neg: 702.0)
+  nightstand           : 4.6694 (Pos: 124.0, Neg: 579.0)
+  notepad              : 350.4998 (Pos: 2.0, Neg: 701.0)
+  office chair         : 2.5867 (Pos: 196.0, Neg: 507.0)
+  open kitchen cabinet : 233.3333 (Pos: 3.0, Neg: 700.0)
+  organizer            : 701.9993 (Pos: 1.0, Neg: 702.0)
+  organizer shelf      : 701.9993 (Pos: 1.0, Neg: 702.0)
+  ottoman              : 9.3382 (Pos: 68.0, Neg: 635.0)
+  oven                 : 116.1666 (Pos: 6.0, Neg: 697.0)
+  painting             : 701.9993 (Pos: 1.0, Neg: 702.0)
+  pantry shelf         : 233.3333 (Pos: 3.0, Neg: 700.0)
+  paper cutter         : 24.1071 (Pos: 28.0, Neg: 675.0)
+  paper towel dispenser : 9.8154 (Pos: 65.0, Neg: 638.0)
+  paper towel roll     : 233.3333 (Pos: 3.0, Neg: 700.0)
+  paper tray           : 233.3333 (Pos: 3.0, Neg: 700.0)
+  piano                : 86.8750 (Pos: 8.0, Neg: 695.0)
+  piano bench          : 139.6000 (Pos: 5.0, Neg: 698.0)
+  picture              : 2.9274 (Pos: 179.0, Neg: 524.0)
+  pillow               : 1.5379 (Pos: 277.0, Neg: 426.0)
+  pillows              : 350.4998 (Pos: 2.0, Neg: 701.0)
+  ping pong table      : 233.3333 (Pos: 3.0, Neg: 700.0)
+  pipe                 : 701.9993 (Pos: 1.0, Neg: 702.0)
+  plastic bin          : 174.7500 (Pos: 4.0, Neg: 699.0)
+  plastic container    : 701.9993 (Pos: 1.0, Neg: 702.0)
+  plate                : 701.9993 (Pos: 1.0, Neg: 702.0)
+  plunger              : 350.4998 (Pos: 2.0, Neg: 701.0)
+  podium               : 233.3333 (Pos: 3.0, Neg: 700.0)
+  pool table           : 86.8750 (Pos: 8.0, Neg: 695.0)
+  poster printer       : 350.4998 (Pos: 2.0, Neg: 701.0)
+  printer              : 9.4925 (Pos: 67.0, Neg: 636.0)
+  projector            : 350.4998 (Pos: 2.0, Neg: 701.0)
+  projector screen     : 701.9993 (Pos: 1.0, Neg: 702.0)
+  rack                 : 49.2143 (Pos: 14.0, Neg: 689.0)
+  rack stand           : 701.9993 (Pos: 1.0, Neg: 702.0)
+  radiator             : 3.1845 (Pos: 168.0, Neg: 535.0)
+  recliner chair       : 350.4998 (Pos: 2.0, Neg: 701.0)
+  recycling bin        : 5.6952 (Pos: 105.0, Neg: 598.0)
+  refrigerator         : 5.8252 (Pos: 103.0, Neg: 600.0)
+  remote               : 233.3333 (Pos: 3.0, Neg: 700.0)
+  rice cooker          : 701.9993 (Pos: 1.0, Neg: 702.0)
+  rope                 : 350.4998 (Pos: 2.0, Neg: 701.0)
+  round table          : 86.8750 (Pos: 8.0, Neg: 695.0)
+  rug                  : 99.4286 (Pos: 7.0, Neg: 696.0)
+  scale                : 174.7500 (Pos: 4.0, Neg: 699.0)
+  scanner              : 233.3333 (Pos: 3.0, Neg: 700.0)
+  seat                 : 34.1500 (Pos: 20.0, Neg: 683.0)
+  shelf                : 1.5471 (Pos: 276.0, Neg: 427.0)
+  shoe                 : 701.9993 (Pos: 1.0, Neg: 702.0)
+  shoe rack            : 701.9993 (Pos: 1.0, Neg: 702.0)
+  shorts               : 350.4998 (Pos: 2.0, Neg: 701.0)
+  shower               : 701.9993 (Pos: 1.0, Neg: 702.0)
+  shower curtain       : 6.5591 (Pos: 93.0, Neg: 610.0)
+  shower curtain rod   : 701.9993 (Pos: 1.0, Neg: 702.0)
+  shower door          : 69.3000 (Pos: 10.0, Neg: 693.0)
+  shredder             : 174.7500 (Pos: 4.0, Neg: 699.0)
+  sign                 : 174.7500 (Pos: 4.0, Neg: 699.0)
+  sink                 : 1.8811 (Pos: 244.0, Neg: 459.0)
+  soap                 : 233.3333 (Pos: 3.0, Neg: 700.0)
+  soap dish            : 139.6000 (Pos: 5.0, Neg: 698.0)
+  soap dispenser       : 14.9773 (Pos: 44.0, Neg: 659.0)
+  sofa bed             : 701.9993 (Pos: 1.0, Neg: 702.0)
+  sofa chair           : 10.3387 (Pos: 62.0, Neg: 641.0)
+  speaker              : 86.8750 (Pos: 8.0, Neg: 695.0)
+  stack of chairs      : 233.3333 (Pos: 3.0, Neg: 700.0)
+  stand                : 139.6000 (Pos: 5.0, Neg: 698.0)
+  statue               : 350.4998 (Pos: 2.0, Neg: 701.0)
+  step stool           : 86.8750 (Pos: 8.0, Neg: 695.0)
+  stool                : 5.5093 (Pos: 108.0, Neg: 595.0)
+  storage bin          : 30.9545 (Pos: 22.0, Neg: 681.0)
+  storage box          : 350.4998 (Pos: 2.0, Neg: 701.0)
+  storage container    : 116.1666 (Pos: 6.0, Neg: 697.0)
+  storage organizer    : 174.7500 (Pos: 4.0, Neg: 699.0)
+  storage shelf        : 350.4998 (Pos: 2.0, Neg: 701.0)
+  stove                : 16.5750 (Pos: 40.0, Neg: 663.0)
+  suitcase             : 17.0256 (Pos: 39.0, Neg: 664.0)
+  table                : 0.4957 (Pos: 470.0, Neg: 233.0)
+  telephone            : 86.8750 (Pos: 8.0, Neg: 695.0)
+  tissue box           : 174.7500 (Pos: 4.0, Neg: 699.0)
+  toaster              : 233.3333 (Pos: 3.0, Neg: 700.0)
+  toaster oven         : 99.4286 (Pos: 7.0, Neg: 696.0)
+  toilet               : 3.4777 (Pos: 157.0, Neg: 546.0)
+  toilet flush button  : 350.4998 (Pos: 2.0, Neg: 701.0)
+  toilet paper         : 9.6515 (Pos: 66.0, Neg: 637.0)
+  toilet paper dispenser : 38.0555 (Pos: 18.0, Neg: 685.0)
+  toilet paper holder  : 139.6000 (Pos: 5.0, Neg: 698.0)
+  toilet paper package : 701.9993 (Pos: 1.0, Neg: 702.0)
+  toilet seat cover dispenser : 139.6000 (Pos: 5.0, Neg: 698.0)
+  toiletry             : 701.9993 (Pos: 1.0, Neg: 702.0)
+  toolbox              : 350.4998 (Pos: 2.0, Neg: 701.0)
+  towel                : 3.8151 (Pos: 146.0, Neg: 557.0)
+  traffic cone         : 174.7500 (Pos: 4.0, Neg: 699.0)
+  trash bin            : 24.1071 (Pos: 28.0, Neg: 675.0)
+  trash cabinet        : 233.3333 (Pos: 3.0, Neg: 700.0)
+  trash can            : 0.6940 (Pos: 415.0, Neg: 288.0)
+  tray                 : 174.7500 (Pos: 4.0, Neg: 699.0)
+  tray rack            : 350.4998 (Pos: 2.0, Neg: 701.0)
+  treadmill            : 139.6000 (Pos: 5.0, Neg: 698.0)
+  trolley              : 701.9993 (Pos: 1.0, Neg: 702.0)
+  trunk                : 701.9993 (Pos: 1.0, Neg: 702.0)
+  tube                 : 350.4998 (Pos: 2.0, Neg: 701.0)
+  tv                   : 4.9576 (Pos: 118.0, Neg: 585.0)
+  tv stand             : 18.5278 (Pos: 36.0, Neg: 667.0)
+  umbrella             : 350.4998 (Pos: 2.0, Neg: 701.0)
+  urinal               : 174.7500 (Pos: 4.0, Neg: 699.0)
+  vending machine      : 233.3333 (Pos: 3.0, Neg: 700.0)
+  vent                 : 701.9993 (Pos: 1.0, Neg: 702.0)
+  wall hanging         : 701.9993 (Pos: 1.0, Neg: 702.0)
+  wardrobe             : 701.9993 (Pos: 1.0, Neg: 702.0)
+  wardrobe cabinet     : 62.9091 (Pos: 11.0, Neg: 692.0)
+  wardrobe closet      : 30.9545 (Pos: 22.0, Neg: 681.0)
+  washing machine      : 45.8667 (Pos: 15.0, Neg: 688.0)
+  washing machines     : 77.1111 (Pos: 9.0, Neg: 694.0)
+  water bottle         : 233.3333 (Pos: 3.0, Neg: 700.0)
+  water cooler         : 49.2143 (Pos: 14.0, Neg: 689.0)
+  water fountain       : 116.1666 (Pos: 6.0, Neg: 697.0)
+  water heater         : 701.9993 (Pos: 1.0, Neg: 702.0)
+  whiteboard           : 4.0214 (Pos: 140.0, Neg: 563.0)
+  window               : 1.6037 (Pos: 270.0, Neg: 433.0)
+  workbench            : 701.9993 (Pos: 1.0, Neg: 702.0)

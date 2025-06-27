@@ -36,11 +36,28 @@ print(f"USING POS_WEIGHT: {not USE_ASYMMETRIC_LOSS}")
 
 SCENE_LIST_PATH = "/nfs/data_todi/jli/Alessio_works/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
 
-# SCENE_LIST_PATH = "/home/disi/Alessio/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
+#SCENE_LIST_PATH = "/home/disi/Alessio/LESS-clone/data/scannet/meta_data/scannetv2-mod.txt"
 
 
-USE_RANDOM_TEMPLATE = False
+# # # USE_RANDOM_TEMPLATE = False
+# # # TEMPLATES = [
+# # #     "There is a {} in the scene",
+# # #     "A scene with {}",
+# # #     "A scene containing {}",
+# # #     "A room with {}",
+# # #     "A room containing {}",
+# # #     "There is {} in the scene",
+# # #     "There is {} in the room",
+# # #     "{} is present in the scene",
+# # #     "{} is present in the room",
+# # #     "In the scene there is a {}",
+# # #     "In the room there is a {}",
+# # #     "The scene contains {}",
+# # #     "The room contains {}",
+# # # ]
+
 TEMPLATES = [
+    # Original templates
     "There is a {} in the scene",
     "A scene with {}",
     "A scene containing {}",
@@ -54,6 +71,14 @@ TEMPLATES = [
     "In the room there is a {}",
     "The scene contains {}",
     "The room contains {}",
+    # Additional templates for better ensemble
+    "A photo of a {} in a room",
+    "A 3D scan of a room with {}",
+    "Indoor scene with {}",
+    "This room has a {}",
+    "You can see a {} here",
+    "A {} can be found in this room",
+    "Look, there's a {} in the scene",
 ]
 
 FEATURE_DIM = 32          # input superpoint dim
@@ -122,6 +147,9 @@ class SceneEncoder(nn.Module):
             for obj in batch_object_names[i]:
                 if obj in object_index:
                     label[object_index[obj]] = 1.0
+                else:
+                    raise ValueError(f"Object '{obj}' not found in object_index. Please check the object names in the dataset.")
+                
 
             # TODO keep 0 for uncorrect objects and 1 for correct objects
             # TODO just modify the weight loss 
@@ -192,9 +220,7 @@ class IPDN(nn.Module):
         self.sampling_module = sampling_module
         self.dec = DEC(**dec, sampling_module=sampling_module, in_channel=media)
 
-                
         self.scene_encoder = SceneEncoder(
-
             feature_dim=FEATURE_DIM,
             hidden_dim=HIDDEN_DIM,
             clip_dim=CLIP_DIM
@@ -303,6 +329,14 @@ class IPDN(nn.Module):
         sp_feats = self.extract_feat(input, superpoints, p2v_map)
         sp_coords_float = scatter_mean(coords_float, superpoints, dim=0)
 
+        sp_feats_batch = []
+        for i in range(len(scenes_len)):
+            s = batch_offsets[i]
+            e = batch_offsets[i+1]
+            sp_feats_batch.append(sp_feats[s:e])
+
+        logits, targets = self.scene_encoder(sp_feats_batch, gt_objects_names, self.object_prompt_features, self.object_index)
+        
         sp_feats, sp_coords_float, fps_seed_sp, batch_offsets, sp_ins_labels, feats_2d = self.expand_and_fps(sp_feats, sp_coords_float, batch_offsets, sp_ins_labels, scenes_len, feats_2d, mode='pred')
         lang_feats = self.text_encoder(lang_tokenss, attention_mask=lang_masks)[0]
         
@@ -312,6 +346,10 @@ class IPDN(nn.Module):
             ret['meta_datas'] = meta_datas
             if view_dependents[0] is not None:
                 ret['view_dependents'] = view_dependents
+        
+        scene_loss = self.scene_encoder_criterion(logits, targets)
+        ret['scene_loss'] = scene_loss * LOSS_SCENE_OBJ_WEIGHT
+
         return ret
     
     def predict_by_feat(self, scan_ids, object_idss, ann_ids, out, superpoints, gt_pmasks, gt_spmasks, fps_seed_sp):
@@ -427,7 +465,6 @@ class IPDN(nn.Module):
         clip_model = clip_model.cuda()
         print(f"\tFROZEN CLIP model loaded: {model_name}")
 
-        
         global_object_names_scene_inputs = set()
 
         for item in train_dataset.scene_inputs:
@@ -442,28 +479,59 @@ class IPDN(nn.Module):
         print(f"Len of global_object_names_scene_inputs: {len(global_object_names_scene_inputs)}")
         # convert set to list
         object_names_list = list(global_object_names_scene_inputs)
+        object_names_list = [name.replace("_", " ") for name in object_names_list]
 
-        prompts = []
+        # # # prompts = []
+        # # # for object_name in object_names_list:
+        # # #     if USE_RANDOM_TEMPLATE:
+        # # #         template = random.choice(TEMPLATES)
+        # # #     else:
+        # # #         # Use first template to be consistent
+        # # #         template = TEMPLATES[0]
+        # # #     prompt = template.format(object_name)
+        # # #     prompts.append(prompt)
+
+        # # # with torch.no_grad():
+        # # #     lang_tokens = clip_tokenizer(text=prompts, return_tensors="pt", padding=True, truncation=True, max_length=77)
+        # # #     for name in lang_tokens.data:
+        # # #         lang_tokens.data[name] = lang_tokens.data[name].cuda()
+        # # #     clip_outputs = clip_model(**lang_tokens)
+        # # #     sentence_feature = clip_outputs.pooler_output
+        # # #     #attention_mask = lang_tokens.data['attention_mask']
+        
+        # # # # normalize the sentence features
+        # # # sentence_feature = F.normalize(sentence_feature, dim=-1)
+
+        print("Using Prompted Ensemble for CLIP Text Features")
+        print("Prompts: ", TEMPLATES)
+        object_prompt_embeddings = []
         for object_name in object_names_list:
-            if USE_RANDOM_TEMPLATE:
-                template = random.choice(TEMPLATES)
-            else:
-                # Use first template to be consistent
-                template = TEMPLATES[0]
-            prompt = template.format(object_name)
-            prompts.append(prompt)
+            # Create all prompt variants for this object
+            prompts_for_object = [template.format(object_name) for template in TEMPLATES]
 
-        with torch.no_grad():
-            lang_tokens = clip_tokenizer(text=prompts, return_tensors="pt", padding=True, truncation=True, max_length=77)
+            # Tokenize all prompts
+            lang_tokens = clip_tokenizer(text=prompts_for_object, return_tensors="pt", padding=True, truncation=True, max_length=77)
             for name in lang_tokens.data:
                 lang_tokens.data[name] = lang_tokens.data[name].cuda()
-            clip_outputs = clip_model(**lang_tokens)
-            sentence_feature = clip_outputs.pooler_output
-            #attention_mask = lang_tokens.data['attention_mask']
-        
-        # normalize the sentence features
+
+            # Encode with CLIP
+            with torch.no_grad():
+                clip_outputs = clip_model(**lang_tokens)
+                prompt_embeddings = clip_outputs.pooler_output  # shape: [num_templates, 768]
+
+            # Normalize each embedding
+            prompt_embeddings = F.normalize(prompt_embeddings, dim=-1)
+
+            # Aggregate prompt embeddings (mean ensemble)
+            aggregated_embedding = prompt_embeddings.mean(dim=0)  # shape: [768]
+            aggregated_embedding = F.normalize(aggregated_embedding, dim=-1)
+                
+            object_prompt_embeddings.append(aggregated_embedding)
+
+        # Stack all object features
+        sentence_feature = torch.stack(object_prompt_embeddings, dim=0)
         sentence_feature = F.normalize(sentence_feature, dim=-1)
-        
+     
         self.object_prompt_features = sentence_feature
 
         self.object_vocab = {
@@ -471,7 +539,63 @@ class IPDN(nn.Module):
             for i, name in enumerate(object_names_list)
         }
 
-        self.object_index = {name: idx for idx, name in enumerate(global_object_names_scene_inputs)}
+        self.object_index = {name: idx for idx, name in enumerate(object_names_list)}
         
-        print(f"\tComputed text features for {len(prompts)} ScanNet object classes.")
+        print(f"\tComputed prompted ensambled text features for {len(object_names_list)} ScanNet object classes.")
         print(f"\tPRECOMPUTE FINISHED\n\n")
+
+    def calculate_and_use_pos_weight(self, train_dataset, val_dataset):
+        all_object_names = {}
+        all_scene_inputs = train_dataset.scene_inputs + val_dataset.scene_inputs
+        for item in all_scene_inputs:
+            for sub_item in item:
+                if sub_item['scene_id'] not in all_object_names:
+                    all_object_names[sub_item['scene_id']] = set()
+                    all_object_names[sub_item['scene_id']].add(sub_item['object_name'])
+                else:
+                    all_object_names[sub_item['scene_id']].add(sub_item['object_name'])
+        
+        # convert the set to lists
+        for scene_id in all_object_names:
+            all_object_names[scene_id] = list(all_object_names[scene_id])
+        # for each object name in the list, replace "_" with " "
+        for scene_id in all_object_names:
+            all_object_names[scene_id] = [name.replace("_", " ") for name in all_object_names[scene_id]]
+        
+        # Create a mapping from object name to index
+        object_to_idx = self.object_index  # since self.object_index maps names to indices
+
+        num_classes = len(self.object_index )
+        total_scenes = len(train_dataset.scene_graphs) + len(val_dataset.scene_graphs)
+        total_pos = torch.zeros(num_classes)
+
+        # Count object occurrences per scene
+        for name, value in all_object_names.items():
+            for obj_name in value:
+                if obj_name in object_to_idx:
+                    class_idx = object_to_idx[obj_name]
+                    total_pos[class_idx] += 1
+                else:
+                    raise ValueError(f"Object '{obj_name}' not found in object_index. Please check the object names in the dataset.")
+
+        # Avoid division by zero
+        epsilon = 1e-6
+        total_neg = total_scenes - total_pos
+        pos_weight = total_neg / (total_pos + epsilon)
+
+        # Print statistics
+        print(f"\n[POS_WEIGHT STATS]")
+        print(f"  Shape       : {pos_weight.shape}")
+        print(f"  Mean        : {pos_weight.mean().item():.4f}")
+        print(f"  Min         : {pos_weight.min().item():.4f}")
+        print(f"  Max         : {pos_weight.max().item():.4f}")
+        print(f"  Non-zero    : {(total_pos > 0).sum().item()} / {num_classes}")
+
+        #print each object name and its corresponding pos_weight
+        print("\n[POS_WEIGHT OBJECT MAPPING]")
+        for obj_name, idx in self.object_index.items():
+            if total_pos[idx] > 0:
+                print(f"  {obj_name:20s} : {pos_weight[idx].item():.4f} (Pos: {total_pos[idx].item()}, Neg: {total_neg[idx].item()})")  
+        
+        self.pos_weight = pos_weight
+        self.scene_encoder_criterion = nn.BCEWithLogitsLoss(pos_weight=self.pos_weight.cuda())

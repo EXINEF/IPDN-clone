@@ -130,7 +130,7 @@ def train(epoch, model, dataloader, optimizer, lr_scheduler, cfg, logger, writer
 def eval(epoch, best_iou, model, dataloader, cfg, logger, writer, save_ckp=False):
     if gorilla.is_main_process():
         logger.info('Validation')
-        pious, spious, sp_r_ious, p_r_ious, nt_labels, meta_datas, view_dependents, scan_ids = [], [], [], [], [], [], [], []
+        pious, spious, sp_r_ious, p_r_ious, nt_labels, meta_datas, view_dependents, scan_ids, scene_losses = [], [], [], [], [], [], [], [], []
         progress_bar = tqdm(total=len(dataloader))
 
     model.eval()
@@ -140,11 +140,13 @@ def eval(epoch, best_iou, model, dataloader, cfg, logger, writer, save_ckp=False
         spiou = result['spiou']
         nt_label = result['nt_label']
         scan_id = result['scan_id']
+        scene_loss = result['scene_loss']
         if gorilla.is_main_process():
             pious.extend(piou)
             spious.extend(spiou)
             nt_labels.extend(nt_label)
             scan_ids.extend(scan_id)
+            scene_losses.append(scene_loss)
             if 'sp_r_iou' in result.keys():
                 sp_r_ious.extend(result['sp_r_iou'])
                 p_r_ious.extend(result['p_r_iou'])
@@ -204,6 +206,8 @@ def eval(epoch, best_iou, model, dataloader, cfg, logger, writer, save_ckp=False
         writer.add_scalar('val/spAcc_25', spprecision_quarter, epoch)
         
         logger.info(f'mIoU : {miou}')
+        logger.info(f'scene_loss: {list_avg(scene_losses)}')
+
         if len(nt_labels) > 0:
             acc_half_results["overall"] = precision_half
             acc_quarter_results["overall"] = precision_quarter
@@ -301,6 +305,8 @@ def main(args):
         val_loader = build_dataloader(val_dataset, **cfg.dataloader.val)
 
     model.precompute_object_prompt_features(train_dataset, val_dataset)
+    print("USING_POSWEIGHT")
+    model.calculate_and_use_pos_weight(train_dataset, val_dataset)
 
     # train and val
     if gorilla.is_main_process():

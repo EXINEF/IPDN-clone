@@ -8,24 +8,65 @@ from datetime import datetime
 FILES_TO_ANALYZE = [
     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/training_roberta_res_SOTA.err",
     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new/training_roberta_res_2new_loss1_posweight.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new/training_roberta_res_2new_loss1_posweight_1.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new/training_roberta_res_2new_loss1_posweight_1.err",
 
     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_res_gt.err",
-
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_res_SOTA.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_res_SOTA_1.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_res_gt_1.err",
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_res_gt_pe.err",
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_res_gt_pe_1.err",   
+    
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_res_SOTA1.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_res_SOTA_1.err",
 
     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/training_roberta_gres_SOTA.err",
     # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new/training_roberta_gres_new_loss1.err",
 
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new/training_roberta_gres_2new_loss1_posweight.err",
+    #"/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new/training_roberta_gres_2new_loss1_posweight.err",
     # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_gres_2new_posweight_norelu.err",
     # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_gres_2new_posweight_norelu_512.err",
     # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_gres_2new_posweight_norelu_weight5.err",
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_gres_2new_posweight_norelu_focalloss_weight20.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new1/training_roberta_gres_2new_posweight_norelu_focalloss_weight20.err",
 
-    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_gres_gt.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_gres_gt.err",
+    # # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_gres_gt_1.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_gres_gt_pe.err",
+    #     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/training_roberta_gres_gt_pe_1.err",
+
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-BCE-GT-PE-0_1-LR.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-BCE-PW-GT-PE-0_1-LR.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-BCE-GT-PE-0_01-LR.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-BCE-PW-GT-PE-0_01-LR.err",
+    
+
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-BCE-PW-GT-PE-0_1-LR_1.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-BCE-PW-GT-PE-0_01-LR_1.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-AL-GT-PE-0_01-LR-COMPLEX.err",
+    # "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new2/GRES-OA-BCEPW-GT-PE-0_01-LR-COMPLEX.err",
+
+    # CLIP BASED
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new3/GRES-LongClip.err",
+    "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-new/training_clip_gres_posweight.err",
     ]
+
+
+# FILES_TO_ANALYZE = [
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/RES-baseline.err",
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/RES-OA-BCE-PW.err",
+    
+
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/GRES-baseline.err",
+
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/GRES-OA-BCE.err",
+
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/GRES-OA-BCE-PW.err",
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/GRES-OA-BCE-PW-NoReLU.err",
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/GRES-OA-BCE-PW-NoReLU-512.err",
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/GRES-OA-BCE-PW-NoReLU-W5.err",
+
+#     "/nfs/data_todi/jli/Alessio_works/IPDN-clone/logs-thesis/GRES-OA-Focal-W20.err",
+    
+# ]
+
 
 
 

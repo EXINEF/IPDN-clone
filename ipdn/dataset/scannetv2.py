@@ -451,6 +451,8 @@ class ScanNetDataset_sample_graph_edge(Dataset):
 
         # remove duplicate objects from gt_objects_names
         gt_objects_names = list(set(gt_objects_names))
+        gt_objects_names = [name.replace("_", " ") for name in gt_objects_names]
+
         return ann_ids, scan_id, coord, coord_float, feat, superpoint, object_idss, gt_pmasks, gt_spmasks, sp_ref_masks, lang_utterances, sp_ins_label, meta_datas, dense_maps, view_dependents, feat_2d, gt_objects_names
     
     def collate_fn(self, batch: Sequence[Sequence]) -> Dict:
