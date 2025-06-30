@@ -116,7 +116,9 @@ optimizer:
   weight_decay: 0.0005
   paramwise_cfg:
    text_encoder:
-     lr_mult: 0.001
+     lr_mult: 0.2
+  #  text_encoder:
+  #    lr_mult: 0.05
    input_conv:
      lr_mult: 0.01
    unet:

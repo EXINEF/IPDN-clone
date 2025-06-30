@@ -107,8 +107,10 @@ class ScanNetDataset_sample_graph_edge(Dataset):
         self.nyu40id2class = self._get_nyu40id2class()
         self.sem2nyu = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 16, 24, 28, 33, 34, 36, 39]
 
+        # self.tokenizer = AutoTokenizer.from_pretrained("openai/clip-vit-large-patch14", use_fast=True)
+        # print('LARGE LONG CLIP: Using AutoTokenizer for text encoding: openai/clip-vit-large-patch14, instead of longclip tokenizer for problems with char_to_token method')
         self.tokenizer = AutoTokenizer.from_pretrained("openai/clip-vit-base-patch32", use_fast=True)
-        print('Using AutoTokenizer for text encoding: openai/clip-vit-base-patch32, instead of longclip tokenizer for problems with char_to_token method')
+        print('BASE LONG CLIP: Using AutoTokenizer for text encoding: openai/clip-vit-base-patch32, instead of longclip tokenizer for problems with char_to_token method')
 
         # if TEXT_ENCODER == 'roberta-base':
         #     self.tokenizer = RobertaTokenizerFast.from_pretrained(TEXT_ENCODER)

@@ -165,6 +165,7 @@ class DEC(nn.Module):
         self.lang_att = lang_att
         self.contrastive_align_loss = contrastive_align_loss
 
+        # H = 768
         H = 512
         self.lang_proj = nn.Linear(H, d_model)
         self.lang_norm = nn.LayerNorm(d_model)

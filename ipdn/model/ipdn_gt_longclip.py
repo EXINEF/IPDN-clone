@@ -207,7 +207,9 @@ class IPDN(nn.Module):
         self.decoder_param = dec
         self.fps_num = fps_num
 
+        # self.text_encoder, _ = longclip.load("/nfs/data_todi/jli/Alessio_works/Long-CLIP/checkpoints/longclip-L.pt", device="cuda")
         self.text_encoder, _ = longclip.load("/nfs/data_todi/jli/Alessio_works/Long-CLIP/checkpoints/longclip-B.pt", device="cuda")
+        
         self.text_encoder.float()
         # self.text_encoder, _ = longclip.load("/home/disi/Alessio/Long-CLIP/checkpoints/longclip-B.pt", device="cuda")
 
